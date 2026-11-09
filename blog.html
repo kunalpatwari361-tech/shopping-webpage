@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Blogs — Pawan Mode</title>
+  <meta name="description" content="Style guides, gaming setups, sneaker care and RC car tips from Pawan Mode.">
+  <meta name="theme-color" content="#07070c">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <noscript><style>.curtain { display: none; }</style></noscript>
+</head>
+<body data-page="blog">
+  <div class="curtain is-closed" id="curtain" aria-hidden="true"><div class="curtain-spinner"><span class="spin"></span>Loading</div></div>
+
+  <main id="main">
+    <section class="page-hero">
+      <div class="world" data-world data-seed="64" data-cars="5"></div>
+      <div class="container page-hero-inner">
+        <nav class="crumbs" aria-label="Breadcrumb"><a href="index.html">Home</a><span>/</span><span>Blogs</span></nav>
+        <h1>Street <span style="color:var(--gold)">news</span></h1>
+        <p class="lead">Style guides, gaming setups, care tips and stories from the crew.</p>
+      </div>
+    </section>
+
+    <section class="section" style="padding-top:32px">
+      <div class="container">
+        <div id="featured"></div>
+        <div class="filter-row" id="filters" role="toolbar" aria-label="Filter posts by topic"></div>
+        <div class="blog-grid" id="posts"></div>
+      </div>
+    </section>
+  </main>
+
+  <div class="reader" id="reader" role="dialog" aria-modal="true" aria-labelledby="articleTitle">
+    <div class="browser">
+      <div class="browser-bar">
+        <span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>
+        <span class="url" id="readerUrl"></span>
+        <button class="icon-btn" id="shareBtn" aria-label="Copy link to this post" style="width:36px;height:36px"></button>
+        <button class="icon-btn" id="closeReader" aria-label="Close article" style="width:36px;height:36px"></button>
+      </div>
+      <div class="browser-body" id="readerBody"></div>
+    </div>
+  </div>
+
+  <script src="js/config.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/art.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/pages/blog.js"></script>
+</body>
+</html>

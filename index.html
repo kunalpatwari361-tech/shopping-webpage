@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Pawan Mode — Open-World Shopping</title>
+  <meta name="description" content="Pawan Mode: game-inspired online store for streetwear, sneakers, gaming gear, accessories and RC cars. Pay with PhonePe, Google Pay, Paytm, card or bank transfer.">
+  <meta name="theme-color" content="#07070c">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <noscript><style>.curtain { display: none; }</style></noscript>
+</head>
+<body data-page="home">
+  <div class="curtain is-closed" id="curtain" aria-hidden="true"><div class="curtain-spinner"><span class="spin"></span>Loading</div></div>
+
+  <main id="main">
+    <section class="hero" id="hero">
+      <div class="world" data-world data-seed="7" data-cars="8"></div>
+      <div class="container hero-content">
+        <span class="hero-tag"><span class="live-dot"></span>Now live in your city</span>
+        <h1 class="hero-title">
+          <span class="line small">Welcome to</span>
+          <span class="line gold glitch" data-text="Pawan Mode">Pawan Mode</span>
+        </h1>
+        <p class="hero-sub"><span id="typewriter">Gear up. Drip out. Rule the city.</span><span class="caret" aria-hidden="true"></span></p>
+        <div class="hero-actions">
+          <a class="btn btn-primary" href="category.html">Start shopping <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+          <a class="btn btn-ghost" href="how-to-use.html">How it works</a>
+        </div>
+        <ul class="hero-stats">
+          <li><b id="statDrops">18</b>Drops live</li>
+          <li><b>4.7★</b>Crew rating</li>
+          <li><b>2–4 days</b>Metro delivery</li>
+        </ul>
+      </div>
+      <div class="scroll-cue" aria-hidden="true"><span></span>Scroll</div>
+    </section>
+
+    <div class="ticker" aria-label="Store news">
+      <div class="ticker-track" id="ticker"></div>
+    </div>
+
+    <section class="section">
+      <div class="container">
+        <div class="section-head">
+          <div>
+            <span class="eyebrow">Choose your loadout</span>
+            <h2 class="section-title">Shop by <span>category</span></h2>
+          </div>
+          <a class="btn btn-ghost btn-sm" href="category.html">All categories</a>
+        </div>
+        <div class="cat-grid" id="homeCats"></div>
+      </div>
+    </section>
+
+    <section class="section section-alt">
+      <div class="container">
+        <div class="section-head">
+          <div>
+            <span class="eyebrow">Most wanted</span>
+            <h2 class="section-title">Hot <span>drops</span></h2>
+            <p class="section-lead">The gear everyone in the city is after right now.</p>
+          </div>
+          <a class="btn btn-ghost btn-sm" href="category.html">View all</a>
+        </div>
+        <div class="grid" id="homeHot"></div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container" id="deal"></div>
+    </section>
+
+    <section class="section">
+      <div class="container">
+        <div class="features">
+          <div class="feature reveal">
+            <div class="feature-icon"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 6h12v10H2zM14 10h4l3 3v3h-7"/><circle cx="6" cy="18" r="2"/><circle cx="17" cy="18" r="2"/></svg></div>
+            <h3>Free delivery</h3>
+            <p>On every order of ₹999 or more, anywhere in India.</p>
+          </div>
+          <div class="feature reveal" style="--fi:rgba(114,213,114,.15);--fc:var(--cash)">
+            <div class="feature-icon"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 3v6c0 4.5-3.4 8-8 9-4.6-1-8-4.5-8-9V6z"/><path d="M8.5 12l2.5 2.5 4.5-5"/></svg></div>
+            <h3>Secure payments</h3>
+            <p>UPI with PhonePe, Google Pay and Paytm, plus cards and bank transfer.</p>
+          </div>
+          <div class="feature reveal" style="--fi:rgba(42,216,255,.15);--fc:var(--cyan)">
+            <div class="feature-icon"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 0 0-14.3-4.9L4 8"/><path d="M4 3v5h5"/><path d="M4 13a8 8 0 0 0 14.3 4.9L20 16"/><path d="M20 21v-5h-5"/></svg></div>
+            <h3>7-day returns</h3>
+            <p>Changed your mind? Return or exchange unused items within 7 days.</p>
+          </div>
+          <div class="feature reveal" style="--fi:rgba(255,45,111,.15);--fc:var(--pink)">
+            <div class="feature-icon"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2L4 14h7l-1 8 9-12h-7z"/></svg></div>
+            <h3>Fast dispatch</h3>
+            <p>Orders ship within 24 hours. Metro cities in 2 to 4 days.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section-alt">
+      <div class="container">
+        <div class="section-head">
+          <div>
+            <span class="eyebrow">Street news</span>
+            <h2 class="section-title">From the <span>blog</span></h2>
+          </div>
+          <a class="btn btn-ghost btn-sm" href="blog.html">All posts</a>
+        </div>
+        <div class="blog-grid" id="homeBlog"></div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container">
+        <div class="cta reveal">
+          <div>
+            <h2>Ready for the heist?</h2>
+            <p>Pick your gear, pay your way with PhonePe, Google Pay, Paytm, card or bank transfer, and we'll handle the getaway.</p>
+            <div style="margin-top:18px" id="ctaBadges"></div>
+          </div>
+          <a class="btn btn-primary" href="category.html">Start the mission</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="js/config.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/art.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/pages/home.js"></script>
+</body>
+</html>
