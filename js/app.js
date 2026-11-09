@@ -22,6 +22,21 @@
   const art = (type, c, a, cls) => ART.svg(type, c, a, cls);
   const productArt = (p, cls) => art(p.art, p.colors[0], p.colors[1], cls);
 
+  /* Racing maps: products in a digital category are downloads, and a map's
+     price comes from its size tier in config.js unless the map sets its own. */
+  const SIZES = C.mapSizes || {};
+  const sizeOf = (p) => (p && SIZES[p.size]) || null;
+  D.products.forEach((p) => {
+    if (catOf(p.cat).digital) p.digital = true;
+    const tier = sizeOf(p);
+    if (tier) {
+      if (p.price == null) p.price = tier.price;
+      if (p.mrp == null) p.mrp = tier.mrp || p.price;
+    }
+    if (p.price == null) { console.warn(`Product "${p.id}" has no price or size.`); p.price = 0; }
+    if (p.mrp == null) p.mrp = p.price;
+  });
+
   function luminance(hex) {
     const c = hex.replace('#', '');
     const n = parseInt(c.length === 3 ? c.split('').map((x) => x + x).join('') : c, 16);
@@ -64,6 +79,8 @@
   window.addEventListener('storage', (e) => { if (e.key && e.key.indexOf('pm_') === 0) emit(); });
 
   /* ---------- cart + wishlist ---------- */
+  // A digital map only ever needs one copy.
+  const maxQty = (id) => (byId(id) && byId(id).digital ? 1 : 10);
   const Cart = {
     items() {
       const raw = store.get('cart', []);
@@ -73,14 +90,14 @@
     add(id, qty = 1) {
       const items = this.items();
       const found = items.find((i) => i.id === id);
-      if (found) found.qty = Math.min(10, found.qty + qty);
-      else items.push({ id, qty: Math.min(10, qty) });
+      if (found) found.qty = Math.min(maxQty(id), found.qty + qty);
+      else items.push({ id, qty: Math.min(maxQty(id), qty) });
       this.save(items);
     },
     setQty(id, qty) {
       let items = this.items();
       if (qty <= 0) items = items.filter((i) => i.id !== id);
-      else { const f = items.find((i) => i.id === id); if (f) f.qty = Math.min(10, qty); }
+      else { const f = items.find((i) => i.id === id); if (f) f.qty = Math.min(maxQty(id), qty); }
       this.save(items);
     },
     remove(id) { this.save(this.items().filter((i) => i.id !== id)); },
@@ -109,13 +126,20 @@
   const setCoupon = (code) => { if (code) session.set('coupon', code); else session.del('coupon'); emit(); };
 
   function totals(code = getCoupon()) {
+    const lines = Cart.lines();
     const sub = Cart.subtotal();
+    const physical = lines.some((l) => !l.product.digital);
+    const digital = lines.some((l) => l.product.digital);
     const coupon = code && C.coupons[code] ? C.coupons[code] : null;
     const valid = !!coupon && sub > 0 && sub >= coupon.min;
     const discount = valid && coupon.type === 'percent' ? Math.round((sub * coupon.value) / 100) : 0;
     const freeShip = (valid && coupon.type === 'shipping') || sub >= C.freeShippingAt;
-    const shipping = sub === 0 || freeShip ? 0 : C.shippingFee;
-    return { sub, discount, shipping, total: sub - discount + shipping, code: valid ? code : null, coupon: valid ? coupon : null, count: Cart.count() };
+    // Downloads never ship, so only charge delivery when there's something physical.
+    const shipping = !physical || freeShip ? 0 : C.shippingFee;
+    return {
+      sub, discount, shipping, total: sub - discount + shipping, code: valid ? code : null, coupon: valid ? coupon : null, count: Cart.count(),
+      physical, digital, digitalOnly: digital && !physical
+    };
   }
 
   /* ---------- icons ---------- */
@@ -149,7 +173,9 @@
     tag: '<path d="M3 12V4h8l10 10-8 8z"/><circle cx="7.5" cy="8.5" r="1.5"/>',
     info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.01"/>',
     gift: '<rect x="3" y="8" width="18" height="13" rx="1"/><path d="M12 8v13M3 12h18"/><path d="M12 8c-1.5-3-5-4-5-1.5S10 8 12 8zM12 8c1.5-3 5-4 5-1.5S14 8 12 8z"/>',
-    star: '<path d="M12 2.5l2.9 6.2 6.6.7-5 4.5 1.4 6.6L12 17.2 6.1 20.5l1.4-6.6-5-4.5 6.6-.7z"/>'
+    star: '<path d="M12 2.5l2.9 6.2 6.6.7-5 4.5 1.4 6.6L12 17.2 6.1 20.5l1.4-6.6-5-4.5 6.6-.7z"/>',
+    download: '<path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M5 21h14"/>',
+    flag: '<path d="M5 21V4"/><path d="M5 4h12l-2 4 2 4H5"/>'
   };
   function icon(name, size = 22) {
     return `<svg class="ic" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">${ICONS[name] || ''}</svg>`;
@@ -169,6 +195,33 @@
   }
   function tagHTML(p) { return p.tag ? `<span class="tag ${p.tag}">${p.tag}</span>` : ''; }
 
+  /* Racing map bits: size badge on the picture, spec chips under the title. */
+  function sizeBadge(p) {
+    const s = sizeOf(p);
+    return s ? `<span class="size-badge sz-${esc(p.size)}" title="${esc(s.label)} map">${esc(p.size)}</span>` : '';
+  }
+  function mapSpecs(p) {
+    if (!p.digital) return '';
+    const s = sizeOf(p);
+    const chips = [
+      s ? `<span class="sz-${esc(p.size)}">${esc(s.label)}</span>` : '',
+      p.km ? `<span>${esc(p.km)} km</span>` : '',
+      p.mb ? `<span>${icon('download', 12)}${esc(p.mb)} MB</span>` : ''
+    ].join('');
+    return `<div class="map-specs">${chips}</div>`;
+  }
+  // One size tier as a filter button (category page) or a link (home page).
+  function sizeTier(key, opts = {}) {
+    const s = SIZES[key];
+    if (!s) return '';
+    const inner = `<b class="size-letter">${esc(key)}</b><span class="size-name">${esc(s.label)}</span>
+      <span class="size-detail">${esc(s.detail || '')}</span>
+      <span class="size-price">${inr(s.price)}${opts.count != null ? `<small>${opts.count} map${opts.count === 1 ? '' : 's'}</small>` : ''}</span>`;
+    return opts.href
+      ? `<a class="size-tier sz-${esc(key)} reveal" href="${opts.href}">${inner}</a>`
+      : `<button type="button" class="size-tier sz-${esc(key)}" data-size="${esc(key)}" aria-pressed="${!!opts.active}">${inner}</button>`;
+  }
+
   function card(p, opts = {}) {
     const on = Wish.has(p.id);
     const actions = opts.variant === 'wish'
@@ -180,12 +233,14 @@
         <div class="card-media" data-view="${p.id}" role="button" tabindex="0" aria-label="Quick view: ${esc(p.name)}" style="--glow:${glowColor(p)}">
           ${tagHTML(p)}
           ${productArt(p)}
+          ${sizeBadge(p)}
           <span class="quick">${icon('eye', 15)} Quick view</span>
         </div>
         ${opts.variant === 'wish' ? '' : `<button class="icon-btn wish ${on ? 'on' : ''}" data-wish="${p.id}" aria-pressed="${on}" aria-label="Save ${esc(p.name)} to wishlist">${icon('heart', 20)}</button>`}
         <div class="card-body">
-          <span class="card-cat">${esc(catOf(p.cat).name)}</span>
+          <span class="card-cat">${esc(catOf(p.cat).name)}${p.digital ? ' · Download' : ''}</span>
           <h3 class="card-title"><a href="#" data-view="${p.id}">${esc(p.name)}</a></h3>
+          ${mapSpecs(p)}
           ${ratingHTML(p)}
           ${priceHTML(p)}
           <div class="card-actions">${actions}</div>
@@ -388,7 +443,7 @@
         <div class="footer-grid">
           <div>
             <a href="index.html" class="logo"><span class="logo-pawan">PAWAN</span><span class="logo-mode">MODE</span></a>
-            <p class="footer-about">Open-world shopping for streetwear, kicks, gaming gear and rides. Gear up, drip out, rule the city.</p>
+            <p class="footer-about">Open-world shopping for streetwear, kicks, gaming gear, rides and racing maps. Gear up, drip out, rule the city.</p>
           </div>
           <div><h4>Shop</h4><ul>${D.categories.map((c) => `<li><a href="category.html?cat=${c.id}">${c.name}</a></li>`).join('')}</ul></div>
           <div><h4>Help</h4><ul>
@@ -521,12 +576,14 @@
     setBadge('appCartCount', count);
     setBadge('wishCount', wish);
     setBadge('appWishCount', wish);
+    const digitalOnly = count > 0 && Cart.lines().every((l) => l.product.digital);
     const meter = $('#shipMeter');
-    if (meter) meter.style.width = Math.min(100, (sub / C.freeShippingAt) * 100) + '%';
+    if (meter) meter.style.width = (digitalOnly ? 100 : Math.min(100, (sub / C.freeShippingAt) * 100)) + '%';
     const label = $('#shipLabel');
     if (label) {
-      label.textContent = sub >= C.freeShippingAt ? 'Free delivery unlocked'
-        : sub ? `${inr(C.freeShippingAt - sub)} to free delivery` : `Free delivery over ${inr(C.freeShippingAt)}`;
+      label.textContent = digitalOnly ? 'Download only · no delivery fee'
+        : sub >= C.freeShippingAt ? 'Free delivery unlocked'
+          : sub ? `${inr(C.freeShippingAt - sub)} to free delivery` : `Free delivery over ${inr(C.freeShippingAt)}`;
     }
     const widget = $('#phoneWidget');
     if (widget) widget.innerHTML = `<span>${count ? `${count} item${count > 1 ? 's' : ''} in cart` : 'Cart is empty'}</span><b>${inr(sub)}</b>`;
@@ -571,6 +628,11 @@
   function addToCart(id, src, qty = 1) {
     const p = byId(id);
     if (!p) return;
+    if (p.digital && Cart.has(id)) {
+      helpText(`<b>${esc(p.name)}</b> is already in your cart. One copy is all you need.`, 2800);
+      return;
+    }
+    if (p.digital) qty = 1;
     // Launch the fly-to-cart clone first: adding to the cart can re-render the page.
     const root = src && src.closest ? src.closest('.card, .modal-box, .deal, .manual') : null;
     flyToCart(root ? $('.art', root) : null);
@@ -596,22 +658,36 @@
     if (!p) return;
     const modal = $('#qvModal'), box = $('#qvBox');
     const on = Wish.has(p.id);
+    const s = sizeOf(p);
+    const spec = (label, value) => (value ? `<div><span>${label}</span><b>${esc(value)}</b></div>` : '');
+    const specs = p.digital ? `
+      <div class="qv-specs">
+        ${spec('Map size', s ? `${p.size} · ${s.label}` : '')}
+        ${spec('Track length', p.km ? `${p.km} km` : '')}
+        ${spec('Race type', p.mode)}
+        ${spec('Checkpoints', p.checkpoints)}
+        ${spec('Download', p.mb ? `${p.mb} MB` : '')}
+        ${spec('Platform', C.digital && C.digital.platform)}
+      </div>` : '';
+    const qty = p.digital ? '' : `<div class="qty"><button type="button" data-step="-1" aria-label="Decrease quantity">${icon('minus', 16)}</button><output id="qvQty">1</output><button type="button" data-step="1" aria-label="Increase quantity">${icon('plus', 16)}</button></div>`;
     box.innerHTML = `
       <button class="icon-btn modal-close" data-close aria-label="Close">${icon('close')}</button>
-      <div class="qv-media" style="--glow:${glowColor(p, 0.45)}">${tagHTML(p)}${productArt(p)}</div>
+      <div class="qv-media" style="--glow:${glowColor(p, 0.45)}">${tagHTML(p)}${productArt(p)}${sizeBadge(p)}</div>
       <div class="qv-info">
-        <span class="card-cat">${esc(catOf(p.cat).name)}</span>
+        <span class="card-cat">${esc(catOf(p.cat).name)}${p.digital ? ' · Digital download' : ''}</span>
         <h2 id="qvTitle">${esc(p.name)}</h2>
         ${ratingHTML(p)}
         ${priceHTML(p)}
         <p class="qv-desc">${esc(p.desc)}</p>
+        ${specs}
         <ul class="feature-list">${p.features.map((f) => `<li>${icon('check', 16)}<span>${esc(f)}</span></li>`).join('')}</ul>
+        ${p.digital && C.digital && C.digital.delivery ? `<p class="dl-note">${icon('download', 18)}<span>${esc(C.digital.delivery)}. No delivery fee.</span></p>` : ''}
         <div class="qv-buy">
-          <div class="qty"><button type="button" data-step="-1" aria-label="Decrease quantity">${icon('minus', 16)}</button><output id="qvQty">1</output><button type="button" data-step="1" aria-label="Increase quantity">${icon('plus', 16)}</button></div>
-          <button class="btn btn-primary" data-add="${p.id}" data-qty-from="qvQty">${icon('cart', 18)} Add to cart</button>
+          ${qty}
+          <button class="btn btn-primary" data-add="${p.id}"${p.digital ? '' : ' data-qty-from="qvQty"'}>${icon('cart', 18)} Add to cart</button>
           <button class="icon-btn wish ${on ? 'on' : ''}" data-wish="${p.id}" aria-pressed="${on}" aria-label="Save to wishlist">${icon('heart')}</button>
         </div>
-        <a class="link-btn" href="how-to-use.html#manual-${p.cat}">How to use this product ${icon('arrow', 15)}</a>
+        <a class="link-btn" href="how-to-use.html#manual-${p.cat}">${p.digital ? 'How to install this map' : 'How to use this product'} ${icon('arrow', 15)}</a>
       </div>`;
     lastFocus = document.activeElement;
     modal.classList.add('open');
@@ -860,6 +936,7 @@
 
   window.PM = {
     D, C, $, $$, esc, inr, byId, catOf, art, productArt, glowColor, icon, card, ratingHTML, priceHTML, tagHTML, payBadges,
+    SIZES, sizeOf, sizeBadge, mapSpecs, sizeTier,
     Cart, Wish, totals, getCoupon, setCoupon, store, session, onChange, mount, helpText, banner, pickup, addToCart,
     openQuickView, buildWorld, lockScroll, unlockScroll, reduceMotion, rng
   };

@@ -1,7 +1,7 @@
 /* Cart page */
 (function () {
   'use strict';
-  const { D, C, $, esc, inr, art, productArt, glowColor, icon, card, Cart, Wish, totals, getCoupon, setCoupon, store, onChange, mount, helpText, payBadges, byId, catOf } = window.PM;
+  const { D, C, $, esc, inr, art, productArt, glowColor, icon, card, Cart, Wish, totals, getCoupon, setCoupon, store, onChange, mount, helpText, payBadges, byId, catOf, sizeOf } = window.PM;
 
   const list = $('#cartList'), summary = $('#summary');
   let couponMsg = { text: '', ok: true };
@@ -24,12 +24,13 @@
       <h2>Summary</h2>
       <div class="sum-row"><span>Items (${t.count})</span><b>${inr(t.sub)}</b></div>
       ${t.discount ? `<div class="sum-row discount"><span>Coupon ${esc(t.code)}</span><b>− ${inr(t.discount)}</b></div>` : ''}
-      <div class="sum-row"><span>Delivery</span><b>${t.shipping ? inr(t.shipping) : 'FREE'}</b></div>
+      <div class="sum-row"><span>Delivery</span><b>${t.digitalOnly ? 'Not needed' : t.shipping ? inr(t.shipping) : 'FREE'}</b></div>
       <div class="sum-total"><span>Total</span><b>${inr(t.total)}</b></div>
-      <div class="ship-meter">
+      ${t.physical ? `<div class="ship-meter">
         ${left > 0 ? `Add <b style="color:var(--gold)">${inr(left)}</b> more for free delivery` : '<b style="color:var(--cash)">Free delivery unlocked!</b>'}
         <div class="bar"><span style="width:${pct}%"></span></div>
-      </div>
+      </div>` : ''}
+      ${t.digital && C.digital && C.digital.delivery ? `<p class="dl-note" style="margin:12px 0 4px">${icon('download', 18)}<span>Racing maps: ${esc(C.digital.delivery.charAt(0).toLowerCase() + C.digital.delivery.slice(1))}.</span></p>` : ''}
       <form class="coupon" id="couponForm" novalidate>
         <label class="sr-only" for="couponInput">Coupon code</label>
         <input class="input" id="couponInput" placeholder="Coupon code" value="${esc(getCoupon() || '')}" autocomplete="off">
@@ -49,6 +50,7 @@
     const c = C.coupons[code];
     if (!c) { couponMsg = { text: `"${code}" isn't a valid code.`, ok: false }; renderSummary(); return; }
     if (Cart.subtotal() < c.min) { couponMsg = { text: `${code} needs an order of ${inr(c.min)} or more.`, ok: false }; renderSummary(); return; }
+    if (c.type === 'shipping' && totals(null).digitalOnly) { couponMsg = { text: `${code} is for delivery. Racing maps are downloads and never have a delivery fee.`, ok: false }; renderSummary(); return; }
     couponMsg = { text: `${code} applied: ${c.label}.`, ok: true };
     setCoupon(code);
     helpText(`Coupon <b>${esc(code)}</b> applied.`, 2400);
@@ -65,25 +67,31 @@
     } else {
       summary.hidden = false;
       $('#cartLayout').style.gridTemplateColumns = '';
-      list.innerHTML = lines.map(({ id, qty, product: p, total }) => `
+      list.innerHTML = lines.map(({ id, qty, product: p, total }) => {
+        const s = sizeOf(p);
+        const qtyControl = p.digital
+          ? `<span class="ci-licence">${icon('download', 15)} 1 copy</span>`
+          : `<div class="qty" aria-label="Quantity">
+                <button type="button" data-dec aria-label="Decrease quantity">${icon('minus', 16)}</button>
+                <span>${qty}</span>
+                <button type="button" data-inc aria-label="Increase quantity" ${qty >= 10 ? 'disabled' : ''}>${icon('plus', 16)}</button>
+              </div>`;
+        return `
         <div class="cart-item" data-id="${id}">
           <div class="thumb" data-view="${id}" role="button" tabindex="0" aria-label="Quick view: ${esc(p.name)}" style="--glow:${glowColor(p)}">${productArt(p)}</div>
           <div class="ci-info">
             <span class="card-cat">${esc(catOf(p.cat).name)}</span>
             <h3>${esc(p.name)}</h3>
-            <p class="ci-each">${inr(p.price)} each</p>
+            <p class="ci-each">${p.digital ? `Digital download${s ? ` · ${esc(s.label)} map` : ''}${p.km ? ` · ${esc(p.km)} km` : ''}` : `${inr(p.price)} each`}</p>
             <div class="ci-controls">
-              <div class="qty" aria-label="Quantity">
-                <button type="button" data-dec aria-label="Decrease quantity">${icon('minus', 16)}</button>
-                <span>${qty}</span>
-                <button type="button" data-inc aria-label="Increase quantity" ${qty >= 10 ? 'disabled' : ''}>${icon('plus', 16)}</button>
-              </div>
+              ${qtyControl}
               <button type="button" class="link-btn" data-save>Move to wishlist</button>
               <button type="button" class="link-btn danger" data-remove>Remove</button>
             </div>
           </div>
           <div class="ci-total">${inr(total)}</div>
-        </div>`).join('');
+        </div>`;
+      }).join('');
       renderSummary();
     }
 

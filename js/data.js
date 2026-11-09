@@ -3,7 +3,15 @@
    Add or edit products here; every page reads from this file.
    art: jacket | tee | hoodie | sneaker | controller | headset |
         shades | watch | cap | backpack | car
+        racing maps: track-circuit | track-ring | track-tri |
+                     track-sprint | track-touge | track-city
    colors: [main colour, accent colour]
+
+   Racing maps (category "maps") are digital downloads:
+   size         S | M | L | XL. The price comes from the size
+                (set prices in js/config.js → mapSizes)
+   km           track length      mb           download size
+   mode         race type         checkpoints  number of checkpoints
    ============================================================ */
 window.PM_DATA = {
   categories: [
@@ -11,7 +19,8 @@ window.PM_DATA = {
     { id: 'footwear', name: 'Footwear', blurb: 'Kicks built for the streets', art: 'sneaker', colors: ['#f4f1ea', '#ff2a3d'] },
     { id: 'gaming', name: 'Gaming Gear', blurb: 'Controllers and headsets', art: 'controller', colors: ['#7a2cff', '#2ad8ff'] },
     { id: 'accessories', name: 'Accessories', blurb: 'Shades, watches, caps, bags', art: 'shades', colors: ['#ffc61a', '#ff7a1a'] },
-    { id: 'rides', name: 'Rides', blurb: 'RC cars and die-cast models', art: 'car', colors: ['#ff7a1a', '#ffc61a'] }
+    { id: 'rides', name: 'Rides', blurb: 'RC cars and die-cast models', art: 'car', colors: ['#ff7a1a', '#ffc61a'] },
+    { id: 'maps', name: 'Racing Maps', blurb: 'Digital race tracks, priced by size', art: 'track-circuit', colors: ['#2ad8ff', '#ffc61a'], digital: true }
   ],
 
   products: [
@@ -131,6 +140,57 @@ window.PM_DATA = {
       colors: ['#ff7a1a', '#f4f1ea'], price: 2499, mrp: 3299, rating: 4.4, reviews: 74,
       desc: 'Retro cruiser RC car with drift tyres, so you can slide around the living room.',
       features: ['Swappable drift tyres', 'USB-rechargeable', 'Proportional steering', 'Range up to 50 m']
+    },
+
+    /* ---------- Racing maps (digital, priced by size) ---------- */
+    {
+      id: 'harbour-night-sprint', name: 'Harbour Night Sprint', cat: 'maps', art: 'track-sprint',
+      colors: ['#2ad8ff', '#ffc61a'], size: 'S', km: 2.6, mb: 18, mode: 'Sprint', checkpoints: 14,
+      rating: 4.6, reviews: 88, tag: 'new',
+      desc: 'A point-to-point dash through the docks, between container stacks and under the harbour cranes. Short, fast and made for photo finishes.',
+      features: ['Point-to-point sprint, 14 checkpoints', 'Tight turns between container stacks', 'Night lighting with neon dock signs', 'Install guide included']
+    },
+    {
+      id: 'pier-drift-park', name: 'Pier Drift Park', cat: 'maps', art: 'track-ring',
+      colors: ['#ff2d6f', '#ffc61a'], size: 'S', km: 1.8, mb: 12, mode: 'Drift', checkpoints: 8,
+      rating: 4.5, reviews: 64,
+      desc: 'A compact drift loop at the end of the pier, with one long sweeping bend and a tight chicane to link your slides.',
+      features: ['Closed drift loop with a chicane', 'Wide run-off areas for big slides', 'Barriers and spectator stands', 'Install guide included']
+    },
+    {
+      id: 'palm-drive-circuit', name: 'Palm Drive Circuit', cat: 'maps', art: 'track-circuit',
+      colors: ['#ffc61a', '#ff2d6f'], size: 'M', km: 4.4, mb: 32, mode: 'Circuit', checkpoints: 22,
+      rating: 4.7, reviews: 152, tag: 'hot', featured: true,
+      desc: 'A palm-lined street circuit along the beachfront, with two long straights and a hairpin before the finish line.',
+      features: ['Lap circuit, 22 checkpoints', 'Two full-throttle straights', 'Hairpin finish for late overtakes', 'Install guide included']
+    },
+    {
+      id: 'canyon-touge-run', name: 'Canyon Touge Run', cat: 'maps', art: 'track-touge',
+      colors: ['#ff7a1a', '#ffc61a'], size: 'M', km: 5.2, mb: 38, mode: 'Touge', checkpoints: 26,
+      rating: 4.8, reviews: 203, featured: true,
+      desc: 'A switchback mountain road cut into the canyon walls. Five hairpins, steep drops and no room for mistakes.',
+      features: ['Uphill point-to-point, 26 checkpoints', 'Five hairpins for drift battles', 'Guard rails and lookout points', 'Install guide included']
+    },
+    {
+      id: 'neon-ring-raceway', name: 'Neon Ring Raceway', cat: 'maps', art: 'track-ring',
+      colors: ['#7a2cff', '#2ad8ff'], size: 'L', km: 7.4, mb: 64, mode: 'Circuit', checkpoints: 34,
+      rating: 4.7, reviews: 118, tag: 'new',
+      desc: 'A high-speed ring road wrapped around the city centre, lit up with neon arches and finished with a fast chicane.',
+      features: ['Lap circuit, 34 checkpoints', 'Neon arches and light trails', 'Fast chicane before the finish', 'Install guide included']
+    },
+    {
+      id: 'desert-delta-rally', name: 'Desert Delta Rally', cat: 'maps', art: 'track-tri',
+      colors: ['#ff7a1a', '#2ad8ff'], size: 'L', km: 8.9, mb: 72, mode: 'Rally', checkpoints: 38,
+      rating: 4.6, reviews: 97,
+      desc: 'A mixed dirt and tarmac rally stage across the desert flats, with jumps, washouts and a long sand straight.',
+      features: ['Rally stage, 38 checkpoints', 'Dirt and tarmac sections', 'Jumps and washouts', 'Install guide included']
+    },
+    {
+      id: 'downtown-grand-loop', name: 'Downtown Grand Loop', cat: 'maps', art: 'track-city',
+      colors: ['#72d572', '#ffc61a'], size: 'XL', km: 12.8, mb: 140, mode: 'Circuit', checkpoints: 52,
+      rating: 4.9, reviews: 76, tag: 'limited', featured: true,
+      desc: 'The whole city in one race: downtown blocks, the harbour bridge and the hills, linked into one giant loop for big crew nights.',
+      features: ['Whole-city lap, 52 checkpoints', 'Downtown, bridge and hill sections', 'Built for big race nights', 'Install guide included']
     }
   ],
 
@@ -143,7 +203,8 @@ window.PM_DATA = {
     'Pay with PhonePe, Google Pay, Paytm, card or bank transfer',
     'Heist Pro controller rated 4.8 by 600+ players',
     'New drop: Getaway Runner sneakers now live',
-    'HEIST20 — 20% off orders above ₹3,000'
+    'HEIST20 — 20% off orders above ₹3,000',
+    'New category: digital racing maps, priced by size'
   ],
 
   tips: [
@@ -154,10 +215,28 @@ window.PM_DATA = {
     'Orders above ₹999 ship free. Watch the meter under the minimap.',
     'Save items with the heart to find them later in your Wishlist.',
     'Code PAWAN10 takes 10% off any order.',
-    'UPI payments work with PhonePe, Google Pay and Paytm.'
+    'UPI payments work with PhonePe, Google Pay and Paytm.',
+    'Racing maps are priced by size: Small, Medium, Large or Extra large.'
   ],
 
   blogs: [
+    {
+      id: 'race-map-sizes', title: 'Small to Extra Large: Picking the Right Race Map Size', tag: 'Maps',
+      date: '2026-11-08', read: 4, art: 'track-city', colors: ['#0b2a33', '#2ad8ff'], artColors: ['#72d572', '#ffc61a'],
+      excerpt: 'Bigger isn\'t always better. Here\'s which map size suits sprints, drift nights and full-crew races.',
+      body: [
+        { p: 'Every racing map in the store comes in one of four sizes, and the size sets the price. Here\'s how to choose.' },
+        { h: 'Small: quick sprints' },
+        { p: 'Up to 3 km. Great for short sprints and drift sessions you want to run again and again. Small maps download fast and suit smaller lobbies.' },
+        { h: 'Medium: full circuits' },
+        { p: '3 to 6 km. Enough room for long straights, a few hairpins and real overtakes. The sweet spot for most race nights.' },
+        { h: 'Large: multi-zone races' },
+        { p: '6 to 10 km. Routes that cross several parts of the city, so every lap changes scenery and pace.' },
+        { h: 'Extra large: whole-city routes' },
+        { p: 'Over 10 km. Built for long events with a full crew. Expect bigger downloads and longer loading times.' },
+        { list: ['Check the download size before buying on mobile data', 'Read the README in the zip for any extra files you need', 'Back up your game files before installing a map'] }
+      ]
+    },
     {
       id: 'night-drip-guide', title: 'The Night Drip Guide: Dress Like You Own the City', tag: 'Style',
       date: '2026-10-28', read: 5, art: 'jacket', colors: ['#2b1055', '#ff2d6f'], artColors: ['#1d1d26', '#ff2d6f'],
@@ -252,7 +331,7 @@ window.PM_DATA = {
     { title: 'Scout the gear', text: 'Tap any product for a quick view: photos, features, price and rating. Tap the heart to save it to your wishlist.' },
     { title: 'Grab the loot', text: 'Press "Add to cart". Your cash counter and wanted stars go up. Add ₹999 or more for free delivery.' },
     { title: 'Plan the heist', text: 'Open your cart, set quantities, and apply a coupon such as PAWAN10. Then press Checkout.' },
-    { title: 'Make the getaway', text: 'Enter your delivery address, then pay with PhonePe, Google Pay, Paytm, card or bank transfer. Mission complete!' }
+    { title: 'Make the getaway', text: 'Enter your delivery address (racing maps only need your email), then pay with PhonePe, Google Pay, Paytm, card or bank transfer. Mission complete!' }
   ],
 
   /* "How to use" — product manuals per category */
@@ -291,6 +370,13 @@ window.PM_DATA = {
       steps: ['Charge the car battery with the included USB cable until the light turns green.', 'Put batteries in the remote (2 × AA, not included).', 'Switch on the remote first, then the car. They pair automatically.', 'Start slow on a flat, dry surface. Push the throttle gently.', 'When done, switch off the car first, then the remote.'],
       dos: ['Let the battery cool before recharging', 'Check the wheels before each run', 'Fit drift tyres for smooth floors'],
       donts: ['Drive through water or sand', 'Leave it charging overnight', 'Lift the car by its wheels']
+    },
+    maps: {
+      title: 'Installing a racing map', art: 'track-circuit', colors: ['#2ad8ff', '#ffc61a'],
+      intro: 'From payment to your first lap in about five minutes.',
+      steps: ['After paying, check your email for the download link. Look in spam if you can\'t see it.', 'Download the .zip file and extract it with 7-Zip or WinRAR.', 'Open the README inside. It lists every file and where it goes.', 'Back up your game files, then copy the map files to the folder the README names, or install them with your mod manager.', 'Start the game, load the map from your map editor or race menu, and line up at the start.'],
+      dos: ['Back up before installing', 'Keep the zip for reinstalls', 'Install any extra files the README lists'],
+      donts: ['Share your download link', 'Install over another map without a backup', 'Use maps in online modes that don\'t allow mods']
     }
   },
 
@@ -306,7 +392,10 @@ window.PM_DATA = {
     { q: 'Which payment methods do you accept?', a: 'PhonePe, Google Pay and Paytm (via UPI), debit and credit cards (Visa, Mastercard, RuPay), and direct bank transfer by NEFT, IMPS or RTGS.' },
     { q: 'Is it safe to pay on Pawan Mode?', a: 'Yes. UPI payments are approved inside your own UPI app with your PIN. We never ask for your UPI PIN, card PIN or OTP over call or chat.' },
     { q: 'How long does delivery take?', a: 'Metro cities usually get orders in 2 to 4 days, and other locations in 4 to 7 days. You\'ll get tracking details once your order ships.' },
-    { q: 'Is delivery free?', a: 'Delivery is free on orders of ₹999 or more. Below that, a flat ₹79 delivery fee applies. The coupon FREERIDE makes delivery free on any order.' },
+    { q: 'Is delivery free?', a: 'Delivery is free on orders of ₹999 or more. Below that, a flat ₹79 delivery fee applies. The coupon FREERIDE makes delivery free on any order. Racing maps are downloads, so they never have a delivery fee.' },
+    { q: 'How do I get a racing map after I pay?', a: 'Racing maps are digital downloads, so there\'s nothing to ship. We email the download link to the address you enter at checkout as soon as your payment is confirmed.' },
+    { q: 'How are racing maps priced?', a: 'By size. Small maps (up to 3 km) cost the least, and Extra large whole-city maps cost the most. Every map shows its size, track length and download size.' },
+    { q: 'Can I return a racing map?', a: 'Digital maps can\'t be returned once the download link has been sent. If a map doesn\'t work for you, contact us within 7 days with your order number and we\'ll help you fix it or give you a refund.' },
     { q: 'Can I return or exchange a product?', a: 'Yes. You can return or exchange unused items with tags within 7 days of delivery. Refunds go back to the original payment method within 5 to 7 working days.' },
     { q: 'I paid by bank transfer. What happens next?', a: 'Enter your UTR or reference number at checkout. We match it with our bank statement and confirm your order, usually within a few hours.' },
     { q: 'My UPI payment failed but money was deducted.', a: 'Don\'t worry. Failed UPI payments are automatically refunded by your bank, usually within 48 hours. If not, contact us with your UPI reference number.' },

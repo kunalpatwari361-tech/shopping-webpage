@@ -187,6 +187,46 @@
     }
   };
 
+  /* ---------- Racing maps: top-down track on a city map tile ----------
+     c = kerb colour, a = centre-line colour. Two cars lap the track
+     (they stay parked at the start for "reduce motion" users). */
+  const still = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  const TRACKS = {
+    circuit: { dur: 7, d: 'M50 40 H130 Q165 40 165 75 V90 Q165 110 145 110 H115 Q100 110 100 125 V140 Q100 165 75 165 H55 Q35 165 35 145 V60 Q35 40 50 40 Z' },
+    tri: { dur: 7, d: 'M100 32 Q120 32 132 52 L166 120 Q176 142 156 158 Q140 170 120 160 L100 148 L80 160 Q60 170 44 158 Q24 142 34 120 L68 52 Q80 32 100 32 Z' },
+    sprint: { dur: 5, end: [166, 32], d: 'M34 166 V150 Q34 120 70 120 H110 Q140 120 140 92 Q140 64 112 64 H80 Q52 64 52 46 Q52 32 70 32 H166' },
+    ring: { dur: 6, d: 'M100 30 A70 70 0 0 1 170 100 A70 70 0 0 1 100 170 Q80 170 80 150 Q80 130 60 130 Q30 130 30 100 A70 70 0 0 1 100 30 Z' },
+    touge: { dur: 6, end: [160, 30], d: 'M40 168 V130 Q40 115 55 115 H145 Q160 115 160 100 Q160 85 145 85 H55 Q40 85 40 70 Q40 55 55 55 H145 Q160 55 160 40 V30' },
+    city: { dur: 9, d: 'M36 40 H100 V70 H164 V130 H130 V164 H60 V130 H36 Z' }
+  };
+  function flag(x, y) {
+    return `<g transform="translate(${x - 7} ${y - 7})"><rect width="14" height="14" rx="2" fill="#fff" stroke="#05050a" stroke-width="1.5"/><rect width="7" height="7" fill="#111"/><rect x="7" y="7" width="7" height="7" fill="#111"/></g>`;
+  }
+  function trackArt(t, c, a) {
+    const [sx, sy] = t.d.match(/-?\d+(\.\d+)?/g).slice(0, 2).map(Number);
+    const road = (stroke, width, extra = '') => `<path d="${t.d}" fill="none" stroke="${stroke}" stroke-width="${width}" stroke-linecap="round" stroke-linejoin="round" ${extra}/>`;
+    const racer = (fill, delay, speed) => {
+      const body = `<path d="M7 0 L-6 -5 L-3 0 L-6 5 Z" fill="${fill}" stroke="#05050a" stroke-width="1.2"/>`;
+      if (still) return '';
+      return `<g>${body}<animateMotion dur="${(t.dur * speed).toFixed(2)}s" begin="${delay}s" repeatCount="indefinite" rotate="auto" path="${t.d}"/></g>`;
+    };
+    return `
+      <rect x="10" y="10" width="180" height="180" rx="26" fill="#0f1b26" stroke="rgba(255,255,255,.14)" stroke-width="2"/>
+      <path d="M118 190 Q130 160 160 156 Q180 153 190 138 V164 Q190 190 164 190 Z" fill="#17405e"/>
+      <rect x="140" y="20" width="36" height="24" rx="6" fill="#173a26"/>
+      <g stroke="#1b2c3c" stroke-width="5"><path d="M10 72 H190 M10 128 H190 M72 10 V190 M128 10 V190"/></g>
+      ${road(c, 28, 'stroke-opacity=".2"')}
+      ${road(c, 18)}
+      ${road('#23232e', 12)}
+      ${road(a, 1.6, 'stroke-dasharray="5 6" opacity=".9"')}
+      ${flag(sx, sy)}
+      ${t.end ? flag(t.end[0], t.end[1]) : ''}
+      ${still ? `<circle cx="${sx}" cy="${sy}" r="4" fill="${a}" stroke="#05050a" stroke-width="1.2"/>` : ''}
+      ${racer('#fff', '0', 1)}
+      ${racer(a, `-${(t.dur * 0.38).toFixed(2)}`, 1.08)}`;
+  }
+  Object.keys(TRACKS).forEach((k) => { DRAW['track-' + k] = (c, a) => trackArt(TRACKS[k], c, a); });
+
   let uid = 0;
   window.PM_ART = {
     shade,

@@ -9,7 +9,18 @@
 (function () {
   'use strict';
   const PM = window.PM;
-  const { C, $, $$, esc, inr, icon, art, productArt, glowColor, Cart, totals, setCoupon, store, session, onChange, lockScroll, unlockScroll, reduceMotion, helpText } = PM;
+  const { C, $, $$, esc, inr, icon, art, productArt, glowColor, Cart, totals, setCoupon, store, session, onChange, lockScroll, unlockScroll, reduceMotion, helpText, sizeOf } = PM;
+
+  // Racing maps are downloads: an all-digital cart needs only name, phone and
+  // email (for the download link). A mixed cart needs the address and the email.
+  const kind = () => { const t = totals(); return { digitalOnly: t.digitalOnly, digital: t.digital }; };
+  const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+  function detailsComplete(a) {
+    if (!a || !a.name || !a.phone) return false;
+    const k = kind();
+    if (k.digital && !EMAIL_RE.test(a.email || '')) return false;
+    return k.digitalOnly || !!(a.line1 && a.city && a.state && a.pincode);
+  }
 
   const app = $('#checkoutApp');
   const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
@@ -75,7 +86,7 @@
   /* ---------- markup ---------- */
   function stepsHTML() {
     const s = (n, label) => `<div class="step ${step === n ? 'active' : ''} ${step > n ? 'done' : ''}"><i>${step > n ? icon('check', 14) : n}</i>${label}</div>`;
-    return `<div class="steps" aria-label="Checkout progress">${s(1, 'Delivery')}${s(2, 'Payment')}${s(3, 'Done')}</div>`;
+    return `<div class="steps" aria-label="Checkout progress">${s(1, kind().digitalOnly ? 'Details' : 'Delivery')}${s(2, 'Payment')}${s(3, 'Done')}</div>`;
   }
 
   function summaryHTML() {
@@ -86,13 +97,13 @@
         <div class="mini-lines">${Cart.lines().map(({ product: p, qty, total }) => `
           <div class="mini-line">
             <div class="thumb" style="--glow:${glowColor(p)}">${productArt(p)}</div>
-            <div><p>${esc(p.name)}</p><small>Qty ${qty}</small></div>
+            <div><p>${esc(p.name)}</p><small>${p.digital ? `Download${sizeOf(p) ? ' · ' + esc(sizeOf(p).label) + ' map' : ''}` : `Qty ${qty}`}</small></div>
             <b>${inr(total)}</b>
           </div>`).join('')}</div>
         <div class="sum-row"><span>Items (${t.count})</span><b>${inr(t.sub)}</b></div>
         ${t.discount ? `<div class="sum-row discount"><span>Coupon ${esc(t.code)}</span><b>− ${inr(t.discount)}</b></div>` : ''}
         ${t.code && !t.discount ? `<div class="sum-row discount"><span>Coupon ${esc(t.code)}</span><b>Applied</b></div>` : ''}
-        <div class="sum-row"><span>Delivery</span><b>${t.shipping ? inr(t.shipping) : 'FREE'}</b></div>
+        <div class="sum-row"><span>Delivery</span><b>${t.digitalOnly ? 'Not needed' : t.shipping ? inr(t.shipping) : 'FREE'}</b></div>
         <div class="sum-total"><span>To pay</span><b>${inr(t.total)}</b></div>
         <p class="secure-note">${icon('lock', 15)} Order #${esc(orderId)} · <a href="cart.html" style="color:var(--gold)">Edit cart</a></p>
       </aside>`;
@@ -100,19 +111,14 @@
 
   function addressFormHTML() {
     const a = address;
+    const k = kind();
     const f = (id, label, opts = {}) => `
       <div class="field ${opts.full ? 'full' : ''}">
         <label for="${id}">${label}${opts.optional ? ' <span style="color:var(--dim)">(optional)</span>' : ''}</label>
         <input class="input" id="${id}" name="${id}" value="${esc(a[id] || '')}" ${opts.attrs || ''}>
         <span class="err"></span>
       </div>`;
-    return `
-      <div class="panel" id="addrPanel">
-        <div class="panel-head"><h2>Delivery details</h2><span class="muted">${icon('truck', 18)}</span></div>
-        <form id="addrForm" class="form-grid" novalidate>
-          ${f('name', 'Full name', { full: true, attrs: 'autocomplete="name" placeholder="Pawan Kumar"' })}
-          ${f('phone', 'Mobile number', { attrs: 'type="tel" inputmode="numeric" maxlength="10" autocomplete="tel-national" placeholder="10-digit mobile"' })}
-          ${f('email', 'Email', { optional: true, attrs: 'type="email" autocomplete="email" placeholder="you@example.com"' })}
+    const addressFields = k.digitalOnly ? '' : `
           ${f('line1', 'House / flat, street', { full: true, attrs: 'autocomplete="address-line1" placeholder="Flat 12, Sunset Towers, MG Road"' })}
           ${f('line2', 'Area / landmark', { full: true, optional: true, attrs: 'autocomplete="address-line2" placeholder="Near City Mall"' })}
           ${f('city', 'City', { attrs: 'autocomplete="address-level2" placeholder="Mumbai"' })}
@@ -124,9 +130,18 @@
             </select>
             <span class="err"></span>
           </div>
-          ${f('pincode', 'PIN code', { attrs: 'inputmode="numeric" maxlength="6" autocomplete="postal-code" placeholder="400001"' })}
+          ${f('pincode', 'PIN code', { attrs: 'inputmode="numeric" maxlength="6" autocomplete="postal-code" placeholder="400001"' })}`;
+    return `
+      <div class="panel" id="addrPanel">
+        <div class="panel-head"><h2>${k.digitalOnly ? 'Your details' : 'Delivery details'}</h2><span class="muted">${icon(k.digitalOnly ? 'download' : 'truck', 18)}</span></div>
+        ${k.digitalOnly ? `<p class="dl-note" style="margin-bottom:14px">${icon('download', 18)}<span>Racing maps are downloads, so there's no address to fill in. We'll send your download link to the email below.</span></p>` : ''}
+        <form id="addrForm" class="form-grid" novalidate>
+          ${f('name', 'Full name', { full: true, attrs: 'autocomplete="name" placeholder="Pawan Kumar"' })}
+          ${f('phone', 'Mobile number', { attrs: 'type="tel" inputmode="numeric" maxlength="10" autocomplete="tel-national" placeholder="10-digit mobile"' })}
+          ${f('email', k.digital ? 'Email (for your map download link)' : 'Email', { optional: !k.digital, attrs: 'type="email" autocomplete="email" placeholder="you@example.com"' })}
+          ${addressFields}
           <label class="full" style="display:flex;gap:10px;align-items:center;margin:4px 0 10px;color:var(--muted);font-weight:600">
-            <input type="checkbox" id="saveAddr" checked style="accent-color:var(--gold);width:18px;height:18px"> Save this address on this device
+            <input type="checkbox" id="saveAddr" checked style="accent-color:var(--gold);width:18px;height:18px"> Save ${k.digitalOnly ? 'these details' : 'this address'} on this device
           </label>
           <button class="btn btn-primary btn-block full" type="submit">Continue to payment ${icon('arrow', 18)}</button>
         </form>
@@ -135,11 +150,14 @@
 
   function addressCardHTML() {
     const a = address;
+    const k = kind();
+    const where = k.digitalOnly ? '' : `<br>${esc(a.line1)}${a.line2 ? ', ' + esc(a.line2) : ''}<br>${esc(a.city)}, ${esc(a.state)} ${esc(a.pincode)}`;
+    const mail = k.digital ? `<br><span style="color:var(--cyan)">Map download link to ${esc(a.email)}</span>` : '';
     return `
       <div class="panel" id="addrPanel">
-        <div class="panel-head"><h2>Delivery details</h2></div>
+        <div class="panel-head"><h2>${k.digitalOnly ? 'Your details' : 'Delivery details'}</h2></div>
         <div class="address-card">
-          <div><b>${esc(a.name)}</b> · ${esc(a.phone)}<br>${esc(a.line1)}${a.line2 ? ', ' + esc(a.line2) : ''}<br>${esc(a.city)}, ${esc(a.state)} ${esc(a.pincode)}</div>
+          <div><b>${esc(a.name)}</b> · ${esc(a.phone)}${where}${mail}</div>
           <button class="link-btn" type="button" id="editAddr">Change</button>
         </div>
       </div>`;
@@ -276,6 +294,8 @@
     clearInterval(qrTimer);
     if (placed) return;
     if (!Cart.count()) { app.innerHTML = emptyHTML(); return; }
+    // The cart can change in another tab (e.g. a physical item added to a maps-only order).
+    if (step === 2 && !detailsComplete(address)) step = 1;
     app.innerHTML = `
       ${stepsHTML()}
       <div class="checkout-layout">
@@ -287,19 +307,24 @@
 
   /* ---------- step 1: address ---------- */
   function validateAddress() {
-    const a = {
-      name: val('name').trim(), phone: val('phone').replace(/\D/g, ''), email: val('email').trim(),
-      line1: val('line1').trim(), line2: val('line2').trim(), city: val('city').trim(), state: val('state'), pincode: val('pincode').trim()
-    };
+    const k = kind();
+    const a = { name: val('name').trim(), phone: val('phone').replace(/\D/g, ''), email: val('email').trim() };
     const errs = {
       name: a.name.length < 2 ? 'Enter your full name.' : '',
       phone: /^[6-9]\d{9}$/.test(a.phone) ? '' : 'Enter a valid 10-digit Indian mobile number.',
-      email: !a.email || /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(a.email) ? '' : 'Enter a valid email or leave it blank.',
-      line1: a.line1.length < 5 ? 'Enter your house number and street.' : '',
-      city: a.city.length < 2 ? 'Enter your city.' : '',
-      state: a.state ? '' : 'Choose your state.',
-      pincode: /^[1-9]\d{5}$/.test(a.pincode) ? '' : 'Enter a valid 6-digit PIN code.'
+      email: k.digital
+        ? (EMAIL_RE.test(a.email) ? '' : 'Enter your email. We send the map download link there.')
+        : (!a.email || EMAIL_RE.test(a.email) ? '' : 'Enter a valid email or leave it blank.')
     };
+    if (!k.digitalOnly) {
+      Object.assign(a, { line1: val('line1').trim(), line2: val('line2').trim(), city: val('city').trim(), state: val('state'), pincode: val('pincode').trim() });
+      Object.assign(errs, {
+        line1: a.line1.length < 5 ? 'Enter your house number and street.' : '',
+        city: a.city.length < 2 ? 'Enter your city.' : '',
+        state: a.state ? '' : 'Choose your state.',
+        pincode: /^[1-9]\d{5}$/.test(a.pincode) ? '' : 'Enter a valid 6-digit PIN code.'
+      });
+    }
     Object.entries(errs).forEach(([k, m]) => fieldErr(k, m));
     const first = Object.keys(errs).find((k) => errs[k]);
     if (first) { document.getElementById(first).focus(); return null; }
@@ -379,13 +404,18 @@
     const order = {
       id: orderId,
       date: new Date().toISOString(),
-      items: Cart.items().map((i) => ({ id: i.id, qty: i.qty, price: PM.byId(i.id).price })),
+      items: Cart.items().map((i) => {
+        const p = PM.byId(i.id);
+        return { id: i.id, qty: i.qty, price: p.price, digital: !!p.digital, size: p.size || null };
+      }),
       sub: t.sub, discount: t.discount, shipping: t.shipping, total: t.total, coupon: t.code,
       method: key,
       methodLabel: METHODS[key].label + (extra.detail ? ' · ' + extra.detail : ''),
       status,
       ref: extra.ref || null,
-      city: `${address.city} ${address.pincode}`
+      digital: t.digital,
+      email: t.digital ? address.email : null,
+      city: t.digitalOnly ? 'Download' : `${address.city} ${address.pincode}`
     };
     const orders = store.get('orders', []);
     orders.unshift(order);
@@ -400,11 +430,15 @@
 
   function showSuccess(order) {
     const paid = order.status === 'Paid';
+    const physical = order.items.some((i) => !i.digital);
+    const mapNote = order.digital
+      ? ` We'll email your map download link to <b>${esc(order.email)}</b>${paid ? '' : ' as soon as your payment is verified'}.`
+      : '';
     app.innerHTML = `${stepsHTML()}
       <div class="empty">
-        ${art('car', '#72d572', '#ffc61a')}
+        ${order.digital && !physical ? art('track-city', '#72d572', '#ffc61a') : art('car', '#72d572', '#ffc61a')}
         <h2>Mission complete</h2>
-        <p>Order <b>#${esc(order.id)}</b> is ${paid ? 'confirmed' : 'placed and waiting for payment verification'}.</p>
+        <p>Order <b>#${esc(order.id)}</b> is ${paid ? 'confirmed' : 'placed and waiting for payment verification'}.${mapNote}</p>
         <a class="btn btn-primary" href="category.html">Keep shopping</a>
       </div>`;
     $('#successSub').textContent = paid ? `Order #${order.id} confirmed` : `Order #${order.id} placed`;
@@ -414,7 +448,8 @@
       <div><span>Method</span><b>${esc(order.methodLabel)}</b></div>
       <div><span>Status</span><b>${paid ? '<span class="pill">Paid</span>' : '<span class="pill pending">Pending verification</span>'}</b></div>
       ${order.ref ? `<div><span>Reference</span><b>${esc(order.ref)}</b></div>` : ''}
-      <div><span>Deliver to</span><b>${esc(address.name)}, ${esc(address.city)}</b></div>
+      ${physical ? `<div><span>Deliver to</span><b>${esc(address.name)}, ${esc(address.city)}</b></div>` : ''}
+      ${order.digital ? `<div><span>Download link to</span><b>${esc(order.email)}${paid ? '' : ' <small style="color:var(--dim)">(after verification)</small>'}</b></div>` : ''}
       <div><span>Respect earned</span><b style="color:var(--gold)">+${respect} REP</b></div>`;
     const ov = $('#success');
     ov.classList.add('open');
@@ -513,12 +548,13 @@
     if (form.id === 'addrForm') {
       const a = validateAddress();
       if (!a) return;
-      address = a;
-      if ($('#saveAddr').checked) store.set('address', a); else store.del('address');
+      // Keep any saved street address when a maps-only order asks just for contact details.
+      address = Object.assign({}, address, a);
+      if ($('#saveAddr').checked) store.set('address', address); else store.del('address');
       step = 2;
       render();
       $('#payPanel').scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' });
-      helpText('Address saved. Now choose how you want to <b>pay</b>.', 3000);
+      helpText(`${kind().digitalOnly ? 'Details' : 'Address'} saved. Now choose how you want to <b>pay</b>.`, 3000);
       return;
     }
 
@@ -600,6 +636,6 @@
   onChange(() => { if (!placed) render(); });
 
   // Returning shoppers with a saved address go straight to payment.
-  if (address && address.name && address.pincode && Cart.count()) step = 2;
+  if (Cart.count() && detailsComplete(address)) step = 2;
   render();
 })();

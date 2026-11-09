@@ -1,12 +1,12 @@
 /* Home page */
 (function () {
   'use strict';
-  const { D, $, esc, inr, art, productArt, glowColor, icon, card, ratingHTML, priceHTML, tagHTML, payBadges, byId, mount, reduceMotion } = window.PM;
+  const { D, $, esc, inr, art, productArt, glowColor, icon, card, ratingHTML, priceHTML, tagHTML, payBadges, byId, mount, reduceMotion, SIZES, sizeTier } = window.PM;
 
   $('#statDrops').textContent = D.products.length;
 
   /* Typewriter */
-  const phrases = ['Gear up. Drip out. Rule the city.', 'Streetwear, kicks, gaming gear and rides.', 'Pay with PhonePe, Google Pay, Paytm, card or bank.'];
+  const phrases = ['Gear up. Drip out. Rule the city.', 'Streetwear, kicks, gaming gear and rides.', 'Racing maps, priced by size.', 'Pay with PhonePe, Google Pay, Paytm, card or bank.'];
   const tw = $('#typewriter');
   if (!reduceMotion) {
     let pi = 0, ci = phrases[0].length, deleting = true;
@@ -40,8 +40,20 @@
     </a>`;
   }).join('');
 
-  /* Hot drops */
-  $('#homeHot').innerHTML = D.products.filter((p) => p.featured).slice(0, 8).map((p) => card(p)).join('');
+  /* Hot drops (physical gear; maps get their own section below) */
+  $('#homeHot').innerHTML = D.products.filter((p) => p.featured && !p.digital).slice(0, 8).map((p) => card(p)).join('');
+
+  /* Racing maps: size tiers, then one map from each size */
+  const maps = D.products.filter((p) => p.digital && SIZES[p.size]);
+  if (maps.length) {
+    const sizes = Object.keys(SIZES);
+    $('#homeTiers').innerHTML = sizes
+      .map((k) => sizeTier(k, { href: `category.html?cat=maps&size=${k}`, count: maps.filter((p) => p.size === k).length })).join('');
+    const pick = sizes.map((k) => maps.filter((p) => p.size === k).sort((a, b) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0) || b.rating - a.rating)[0]).filter(Boolean);
+    $('#homeMaps').innerHTML = pick.slice(0, 4).map((p) => card(p)).join('');
+  } else {
+    $('#maps').hidden = true;
+  }
 
   /* Deal of the day */
   const deal = byId(D.dealId);

@@ -1,7 +1,7 @@
 /* Categories page: loadout wheel + filters */
 (function () {
   'use strict';
-  const { D, $, $$, esc, inr, card, mount, ART } = Object.assign({ ART: window.PM_ART }, window.PM);
+  const { D, $, $$, esc, inr, card, mount, ART, SIZES, sizeTier } = Object.assign({ ART: window.PM_ART }, window.PM);
 
   const SLOTS = [{ id: 'all', name: 'All gear', short: 'All', blurb: 'Everything in the store, all in one place.', art: 'all', colors: ['#ffc61a', '#ff2d6f'] }]
     .concat(D.categories.map((c) => ({ id: c.id, name: c.name, short: c.name.split(' ')[0], blurb: c.blurb, art: c.art, colors: c.colors })));
@@ -11,8 +11,12 @@
     cat: SLOTS.some((s) => s.id === params.get('cat')) ? params.get('cat') : 'all',
     q: params.get('q') || '',
     max: 6000,
-    sort: 'featured'
+    sort: 'featured',
+    size: SIZES[params.get('size')] ? params.get('size') : 'all'
   };
+  // The size filter only applies to categories with sized items (racing maps).
+  const hasSizes = (cat) => cat !== 'all' && D.products.some((p) => p.cat === cat && SIZES[p.size]);
+  if (!hasSizes(state.cat)) state.size = 'all';
 
   /* ---------- the wheel ---------- */
   const CX = 200, CY = 200, R1 = 80, R2 = 192, GAP = 1.6;
@@ -64,12 +68,41 @@
     $('#statTop').textContent = Math.max(...items.map((p) => p.rating)).toFixed(1) + '★';
     if (changed) {
       ['#hub', '#loadName'].forEach((s) => { const el = $(s); el.classList.remove('swap'); void el.offsetWidth; el.classList.add('swap'); });
-      const url = new URL(location.href);
-      if (id === 'all') url.searchParams.delete('cat'); else url.searchParams.set('cat', id);
-      history.replaceState(null, '', url);
+      if (!hasSizes(id)) state.size = 'all';
+      syncURL();
     }
+    renderSizes();
     render(changed);
   }
+
+  function syncURL() {
+    const url = new URL(location.href);
+    if (state.cat === 'all') url.searchParams.delete('cat'); else url.searchParams.set('cat', state.cat);
+    if (state.size === 'all') url.searchParams.delete('size'); else url.searchParams.set('size', state.size);
+    history.replaceState(null, '', url);
+  }
+
+  /* ---------- map size tiers ---------- */
+  function renderSizes() {
+    const bar = $('#sizeBar');
+    bar.hidden = !hasSizes(state.cat);
+    if (bar.hidden) return;
+    const items = D.products.filter((p) => p.cat === state.cat);
+    const all = `<button type="button" class="size-tier sz-all" data-size="all" aria-pressed="${state.size === 'all'}">
+      <b class="size-letter">ALL</b><span class="size-name">All sizes</span>
+      <span class="size-detail">Every map in this category</span>
+      <span class="size-price"><small>${items.length} maps</small></span></button>`;
+    $('#sizeTiers').innerHTML = all + Object.keys(SIZES)
+      .map((k) => sizeTier(k, { active: state.size === k, count: items.filter((p) => p.size === k).length })).join('');
+  }
+  $('#sizeTiers').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-size]');
+    if (!b || b.dataset.size === state.size) return;
+    state.size = b.dataset.size;
+    $$('#sizeTiers [data-size]').forEach((x) => x.setAttribute('aria-pressed', String(x.dataset.size === state.size)));
+    syncURL();
+    render(true);
+  });
 
   $('#wheel').addEventListener('click', (e) => {
     const g = e.target.closest('.seg');
@@ -89,7 +122,11 @@
   function filtered() {
     const q = state.q.trim().toLowerCase();
     let list = D.products.filter((p) => (state.cat === 'all' || p.cat === state.cat) && p.price <= state.max);
-    if (q) list = list.filter((p) => (p.name + ' ' + p.desc + ' ' + p.cat).toLowerCase().includes(q));
+    if (state.size !== 'all') list = list.filter((p) => p.size === state.size);
+    if (q) {
+      list = list.filter((p) => [p.name, p.desc, p.cat, p.mode, p.digital ? 'race racing map track digital' : '', SIZES[p.size] ? SIZES[p.size].label : '']
+        .join(' ').toLowerCase().includes(q));
+    }
     const disc = (p) => 1 - p.price / p.mrp;
     const sorters = {
       featured: (a, b) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0) || b.rating - a.rating,
@@ -121,9 +158,10 @@
   });
   $('#sort').addEventListener('change', (e) => { state.sort = e.target.value; render(true); });
   $('#resetFilters').addEventListener('click', () => {
-    state.q = ''; state.max = 6000; state.sort = 'featured';
+    state.q = ''; state.max = 6000; state.sort = 'featured'; state.size = 'all';
     search.value = ''; $('#maxPrice').value = 6000; $('#maxPriceOut').textContent = inr(6000); $('#sort').value = 'featured';
     selectCat('all');
+    syncURL();
     render(true);
   });
 
