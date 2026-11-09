@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>How to Use — Pawan Mode</title>
+  <meta name="description" content="How to shop on Pawan Mode, how to pay with PhonePe, Google Pay, Paytm, card or bank transfer, and how to use and care for your products.">
+  <meta name="theme-color" content="#07070c">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <noscript><style>.curtain { display: none; }</style></noscript>
+</head>
+<body data-page="howto">
+  <div class="curtain is-closed" id="curtain" aria-hidden="true"><div class="curtain-spinner"><span class="spin"></span>Loading</div></div>
+
+  <main id="main">
+    <section class="page-hero">
+      <div class="world" data-world data-seed="77" data-cars="6"></div>
+      <div class="container page-hero-inner">
+        <nav class="crumbs" aria-label="Breadcrumb"><a href="index.html">Home</a><span>/</span><span>How to use</span></nav>
+        <h1>Mission <span style="color:var(--gold)">briefing</span></h1>
+        <p class="lead">How to shop, how to pay, and how to get the most out of your gear.</p>
+      </div>
+    </section>
+
+    <section class="section" style="padding-top:36px">
+      <div class="container">
+        <div class="section-head">
+          <div>
+            <span class="eyebrow">Mission 01</span>
+            <h2 class="section-title">Place your <span>first order</span></h2>
+            <p class="section-lead">Five objectives from browsing to delivery. Scroll to complete each one.</p>
+          </div>
+          <p class="result-count" id="objProgress" style="margin:0">0 / 5 complete</p>
+        </div>
+        <div class="objectives" id="objectives"></div>
+      </div>
+    </section>
+
+    <section class="section section-alt" id="manuals">
+      <div class="container">
+        <div class="section-head">
+          <div>
+            <span class="eyebrow">Mission 02</span>
+            <h2 class="section-title">Product <span>manuals</span></h2>
+            <p class="section-lead">Setup and care for every category, plus how to install racing maps. Pick one below.</p>
+          </div>
+        </div>
+        <div class="tabs" id="manualTabs" role="tablist" aria-label="Product category"></div>
+        <div id="manualPanel"></div>
+      </div>
+    </section>
+
+    <section class="section" id="payments">
+      <div class="container">
+        <div class="section-head">
+          <div>
+            <span class="eyebrow">Mission 03</span>
+            <h2 class="section-title">How to <span>pay</span></h2>
+            <p class="section-lead">Every way to pay at checkout, step by step.</p>
+          </div>
+        </div>
+        <div class="pay-guide" id="payGuide"></div>
+      </div>
+    </section>
+
+    <section class="section" id="faq" style="padding-top:0">
+      <div class="container">
+        <div class="section-head">
+          <div>
+            <span class="eyebrow">Intel</span>
+            <h2 class="section-title">Frequently <span>asked</span></h2>
+          </div>
+        </div>
+        <div class="faq" id="faqList"></div>
+      </div>
+    </section>
+  </main>
+
+  <script src="js/config.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/art.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/pages/howto.js"></script>
+</body>
+</html>

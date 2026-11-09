@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Checkout — Pawan Mode</title>
+  <meta name="description" content="Pay for your Pawan Mode order with PhonePe, Google Pay, Paytm, card or bank transfer.">
+  <meta name="theme-color" content="#07070c">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <noscript><style>.curtain { display: none; }</style></noscript>
+</head>
+<body data-page="checkout">
+  <div class="curtain is-closed" id="curtain" aria-hidden="true"><div class="curtain-spinner"><span class="spin"></span>Loading</div></div>
+
+  <main id="main">
+    <section class="page-hero" style="height:clamp(260px,36vh,340px)">
+      <div class="world" data-world data-seed="58" data-cars="7"></div>
+      <div class="container page-hero-inner">
+        <nav class="crumbs" aria-label="Breadcrumb"><a href="index.html">Home</a><span>/</span><a href="cart.html">Cart</a><span>/</span><span>Checkout</span></nav>
+        <h1>The <span style="color:var(--gold)">getaway</span></h1>
+        <p class="lead">Your details, then payment. Two steps and you're done.</p>
+      </div>
+    </section>
+
+    <section class="section" style="padding-top:28px">
+      <div class="container" id="checkoutApp"></div>
+    </section>
+  </main>
+
+  <div class="overlay" id="processing" role="dialog" aria-modal="true" aria-labelledby="procTitle">
+    <div class="proc-box">
+      <div class="proc-ring"></div>
+      <h3 id="procTitle">Processing payment</h3>
+      <ul class="proc-steps" id="procSteps"></ul>
+      <p class="proc-note">Please don't close or refresh this page.</p>
+    </div>
+  </div>
+
+  <div class="overlay" id="success" role="dialog" aria-modal="true" aria-labelledby="successTitle">
+    <div class="cash-rain" id="cashRain"></div>
+    <div class="success-box">
+      <div class="success-title" id="successTitle">Mission<br>Complete</div>
+      <p class="success-sub" id="successSub">Order placed</p>
+      <div class="success-stats" id="successStats"></div>
+      <div class="success-actions">
+        <a class="btn btn-primary" href="category.html">Keep shopping</a>
+        <a class="btn btn-ghost" href="cart.html#orders">View my orders</a>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/config.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/art.js"></script>
+  <script src="js/app.js"></script>
+  <!-- QR code generator for UPI payments -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" integrity="sha512-CNgIRecGo7nphbeZ04Sc13ka07paqdeTu0WR1IM4kNcpmBAUSHSQX0FslNhTDadL4O5SAGapGt4FodqL8My0mA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="js/pages/checkout.js"></script>
+</body>
+</html>
