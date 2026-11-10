@@ -1,0 +1,14 @@
+# Dependencies
+node_modules/
+
+# Secrets: never commit these
+.env
+.env.*
+!.env.example
+
+# Live data: orders database and paid map files
+data/
+private/downloads/*
+!private/downloads/README.md
+
+*.log

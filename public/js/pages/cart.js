@@ -1,7 +1,7 @@
 /* Cart page */
 (function () {
   'use strict';
-  const { D, C, $, esc, inr, art, productArt, glowColor, icon, card, Cart, Wish, totals, getCoupon, setCoupon, store, onChange, mount, helpText, payBadges, byId, catOf, sizeOf } = window.PM;
+  const { D, C, $, esc, inr, art, productArt, glowColor, icon, card, Cart, Wish, totals, getCoupon, setCoupon, store, onChange, mount, helpText, payBadges, byId, catOf, sizeOf, api, MyOrders } = window.PM;
 
   const list = $('#cartList'), summary = $('#summary');
   let couponMsg = { text: '', ok: true };
@@ -99,16 +99,62 @@
     const picks = D.products.filter((p) => !inCart.has(p.id)).sort((a, b) => b.rating - a.rating).slice(0, 4);
     $('#suggest').innerHTML = picks.map((p) => card(p)).join('');
 
-    const orders = store.get('orders', []);
-    $('#orderList').innerHTML = orders.length ? orders.map((o) => `
-      <div class="order-row">
-        <div><b>#${esc(o.id)}</b><small>${new Date(o.date).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}</small></div>
-        <div>${o.items.reduce((s, i) => s + i.qty, 0)} items<small>${esc(o.methodLabel)}</small></div>
-        <div style="color:var(--cash);font-weight:700">${inr(o.total)}<small>${esc(o.city || '')}</small></div>
-        <div><span class="pill ${o.status === 'Paid' ? '' : 'pending'}">${esc(o.status)}</span></div>
-      </div>`).join('') : '<p class="muted">No orders yet. Your completed missions will show up here.</p>';
     mount();
   }
+
+  /* ---------- my orders: live status from the shop's server ---------- */
+  const METHOD = { phonepe: 'PhonePe', gpay: 'Google Pay', paytm: 'Paytm', card: 'Card', bank: 'Bank transfer' };
+  const when = (iso) => new Date(iso).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' });
+  const pillCls = (o) => (o.paid ? '' : o.status === 'cancelled' ? 'bad' : 'pending');
+
+  function orderRow(o) {
+    const count = o.items.reduce((s, i) => s + i.qty, 0);
+    const dl = o.downloads.length ? `<div class="order-dl">${o.downloads.map((d) => d.available
+      ? `<button class="btn btn-cash btn-sm" type="button" data-dl="${esc(d.productId)}" data-dl-order="${esc(o.id)}">${icon('download', 16)} ${esc(d.name)}</button>`
+      : `<span class="dl-wait">${icon('download', 16)} ${esc(d.name)}: ${!d.fileReady ? 'being prepared' : d.used >= d.limit ? 'download limit reached' : 'download period ended'}</span>`).join('')}
+      ${o.downloads.some((d) => d.available) ? `<small>${o.downloads[0].limit} downloads each, until ${new Date(o.downloads[0].until).toLocaleDateString('en-IN', { dateStyle: 'medium' })}</small>` : ''}</div>` : '';
+    const note = o.digital && !o.paid && o.status !== 'cancelled' ? '<div class="order-dl"><small>Map downloads unlock as soon as your payment is confirmed.</small></div>' : '';
+    return `
+      <div class="order-row">
+        <div><b>#${esc(o.id)}</b><small>${esc(when(o.createdAt))}</small></div>
+        <div>${count} item${count === 1 ? '' : 's'}<small>${esc(METHOD[o.method] || 'Payment not started')}${o.provider === 'demo' ? ' (test)' : ''}</small></div>
+        <div style="color:var(--cash);font-weight:700">${inr(o.total)}<small>${esc(o.deliverTo || 'Download')}</small></div>
+        <div><span class="pill ${pillCls(o)}">${esc(o.statusLabel)}</span></div>
+        ${dl}${note}
+      </div>`;
+  }
+
+  // Orders saved by the old browser-only demo checkout (before the shop had a server).
+  function legacyRow(o) {
+    return `
+      <div class="order-row">
+        <div><b>#${esc(o.id)}</b><small>${esc(when(o.date))}</small></div>
+        <div>${o.items.reduce((s, i) => s + i.qty, 0)} items<small>${esc(o.methodLabel || '')}</small></div>
+        <div style="color:var(--cash);font-weight:700">${inr(o.total)}<small>${esc(o.city || '')}</small></div>
+        <div><span class="pill pending">Test order</span></div>
+      </div>`;
+  }
+
+  let ordersLoading = false;
+  async function renderOrders() {
+    if (ordersLoading) return;
+    const box = $('#orderList');
+    const mine = MyOrders.list();
+    const legacy = (store.get('orders', []) || []).filter((o) => o && o.id && Array.isArray(o.items));
+    if (!mine.length && !legacy.length) { box.innerHTML = '<p class="muted">No orders yet. Your completed missions will show up here.</p>'; return; }
+    if (mine.length && !box.querySelector('.order-row')) box.innerHTML = '<p class="muted">Loading your orders…</p>';
+    ordersLoading = true;
+    const results = await Promise.all(mine.map((m) => api(`/orders/${encodeURIComponent(m.id)}`, { token: m.token })
+      .then((r) => r.order, (err) => ({ id: m.id, error: err }))));
+    ordersLoading = false;
+    // Forget orders the server no longer has.
+    const gone = results.filter((r) => r.error && r.error.status === 404).map((r) => r.id);
+    if (gone.length) store.set('myorders', MyOrders.list().filter((m) => !gone.includes(m.id)));
+    const failed = results.find((r) => r.error && r.error.status !== 404);
+    const rows = results.filter((r) => !r.error).map(orderRow).join('') + legacy.map(legacyRow).join('');
+    box.innerHTML = (failed ? `<p class="coupon-msg bad">${esc(failed.error.message)}</p>` : '') + (rows || '<p class="muted">No orders yet. Your completed missions will show up here.</p>');
+  }
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') renderOrders(); });
 
   function removeLine(row, fn) {
     row.classList.add('dropping');
@@ -153,4 +199,5 @@
     render();
   });
   render();
+  renderOrders();
 })();

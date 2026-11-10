@@ -374,9 +374,9 @@ window.PM_DATA = {
     maps: {
       title: 'Installing a racing map', art: 'track-circuit', colors: ['#2ad8ff', '#ffc61a'],
       intro: 'From payment to your first lap in about five minutes.',
-      steps: ['After paying, check your email for the download link. Look in spam if you can\'t see it.', 'Download the .zip file and extract it with 7-Zip or WinRAR.', 'Open the README inside. It lists every file and where it goes.', 'Back up your game files, then copy the map files to the folder the README names, or install them with your mod manager.', 'Start the game, load the map from your map editor or race menu, and line up at the start.'],
+      steps: ['After paying, tap your map on the order screen, or download it later from Cart → My orders on the same device.','Download the .zip file and extract it with 7-Zip or WinRAR.', 'Open the README inside. It lists every file and where it goes.', 'Back up your game files, then copy the map files to the folder the README names, or install them with your mod manager.', 'Start the game, load the map from your map editor or race menu, and line up at the start.'],
       dos: ['Back up before installing', 'Keep the zip for reinstalls', 'Install any extra files the README lists'],
-      donts: ['Share your download link', 'Install over another map without a backup', 'Use maps in online modes that don\'t allow mods']
+      donts: ['Share your map files', 'Install over another map without a backup', 'Use maps in online modes that don\'t allow mods']
     }
   },
 
@@ -384,7 +384,7 @@ window.PM_DATA = {
     { id: 'phonepe', name: 'PhonePe', logo: 'Pe', cls: 'pl-phonepe', steps: ['Choose PhonePe at checkout', 'Scan the QR or tap "Pay" on your phone', 'Check the amount and enter your UPI PIN'] },
     { id: 'gpay', name: 'Google Pay', logo: '<em>G</em>Pay', cls: 'pl-gpay', steps: ['Choose Google Pay at checkout', 'Scan the QR with Google Pay', 'Approve with your UPI PIN'] },
     { id: 'paytm', name: 'Paytm', logo: 'Paytm', cls: 'pl-paytm', steps: ['Choose Paytm at checkout', 'Scan the QR or enter your UPI ID', 'Confirm in the Paytm app'] },
-    { id: 'card', name: 'Debit / Credit Card', icon: 'card', cls: 'pl-card', steps: ['Enter your card number, name, expiry and CVV', 'Complete the OTP from your bank', 'Visa, Mastercard and RuPay accepted'] },
+    { id: 'card', name: 'Debit / Credit Card', icon: 'card', cls: 'pl-card', steps: ['Choose Card and tap Pay. A secure Razorpay window opens', 'Enter your card details there, never anywhere else on the site', 'Complete the OTP from your bank'] },
     { id: 'bank', name: 'Bank Transfer', icon: 'bank', cls: 'pl-bank', steps:['Copy our account number and IFSC', 'Send the exact amount by NEFT, IMPS or RTGS', 'Enter the UTR / reference number to confirm'] }
   ],
 
@@ -393,9 +393,9 @@ window.PM_DATA = {
     { q: 'Is it safe to pay on Pawan Mode?', a: 'Yes. UPI payments are approved inside your own UPI app with your PIN. We never ask for your UPI PIN, card PIN or OTP over call or chat.' },
     { q: 'How long does delivery take?', a: 'Metro cities usually get orders in 2 to 4 days, and other locations in 4 to 7 days. You\'ll get tracking details once your order ships.' },
     { q: 'Is delivery free?', a: 'Delivery is free on orders of ₹999 or more. Below that, a flat ₹79 delivery fee applies. The coupon FREERIDE makes delivery free on any order. Racing maps are downloads, so they never have a delivery fee.' },
-    { q: 'How do I get a racing map after I pay?', a: 'Racing maps are digital downloads, so there\'s nothing to ship. We email the download link to the address you enter at checkout as soon as your payment is confirmed.' },
+    { q: 'How do I get a racing map after I pay?', a: 'Racing maps are digital downloads, so there\'s nothing to ship. As soon as your payment is confirmed you can download them from the order screen, and again later from Cart → My orders. Each map can be downloaded 5 times within 30 days.' },
     { q: 'How are racing maps priced?', a: 'By size. Small maps (up to 3 km) cost the least, and Extra large whole-city maps cost the most. Every map shows its size, track length and download size.' },
-    { q: 'Can I return a racing map?', a: 'Digital maps can\'t be returned once the download link has been sent. If a map doesn\'t work for you, contact us within 7 days with your order number and we\'ll help you fix it or give you a refund.' },
+    { q: 'Can I return a racing map?', a: 'Digital maps can\'t be returned once they\'ve been downloaded. If a map doesn\'t work for you, contact us within 7 days with your order number and we\'ll help you fix it or give you a refund.' },
     { q: 'Can I return or exchange a product?', a: 'Yes. You can return or exchange unused items with tags within 7 days of delivery. Refunds go back to the original payment method within 5 to 7 working days.' },
     { q: 'I paid by bank transfer. What happens next?', a: 'Enter your UTR or reference number at checkout. We match it with our bank statement and confirm your order, usually within a few hours.' },
     { q: 'My UPI payment failed but money was deducted.', a: 'Don\'t worry. Failed UPI payments are automatically refunded by your bank, usually within 48 hours. If not, contact us with your UPI reference number.' },
