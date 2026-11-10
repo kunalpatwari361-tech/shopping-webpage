@@ -31,7 +31,7 @@ try {
 const db = openDb(config.dbFile);
 const catalog = loadCatalog(config.publicDir);
 const razorpay = config.paymentMode === 'razorpay' ? createRazorpay(config.razorpay) : null;
-const { app, orders } = createApp({ config, db, catalog, razorpay, log });
+const { app, orders, analytics } = createApp({ config, db, catalog, razorpay, log });
 
 /* ---------- tell the owner what still needs setting up ---------- */
 if (config.paymentMode === 'demo') log.warn('Demo payments are ON: UPI and card payments are simulated. Add Razorpay keys to .env to take real payments.');
@@ -42,8 +42,12 @@ if (!config.admin.enabled) log.warn('Admin panel is OFF. Set ADMIN_PASSWORD (12+
 const missing = [...catalog.products.values()].filter((p) => p.digital && !fs.existsSync(orders.fileFor(p.id)));
 if (missing.length) log.warn(`${missing.length} racing map file(s) missing from ${path.relative(ROOT, config.downloadDir) || config.downloadDir}: ${missing.map((p) => p.id + '.zip').join(', ')}`);
 
-/* ---------- housekeeping: cancel unpaid orders after UNPAID_ORDER_HOURS ---------- */
-const sweep = () => { try { const n = orders.expireUnpaid(); if (n) log.info(`Cancelled ${n} unpaid order(s).`); } catch (e) { log.error('Cleanup failed:', e); } };
+/* ---------- housekeeping: cancel unpaid orders after UNPAID_ORDER_HOURS,
+   and forget visitor hashes from days that are over ---------- */
+const sweep = () => {
+  try { const n = orders.expireUnpaid(); if (n) log.info(`Cancelled ${n} unpaid order(s).`); } catch (e) { log.error('Cleanup failed:', e); }
+  try { analytics.prune(); } catch (e) { log.error('Visitor cleanup failed:', e); }
+};
 sweep();
 const timer = setInterval(sweep, 60 * 60e3);
 timer.unref();
@@ -53,7 +57,8 @@ const server = app.listen(config.port, config.host, () => {
   log.info(`${catalog.storeName} is running at http://${shown}:${config.port}  (payments: ${config.paymentMode}${config.admin.enabled ? ', admin: /admin.html' : ''})`);
 });
 server.headersTimeout = 20e3;
-server.requestTimeout = 30e3;
+// Long enough for the admin to upload a large map file on a slow connection.
+server.requestTimeout = 15 * 60e3;
 
 function shutdown(signal) {
   log.info(`${signal} received, shutting down.`);

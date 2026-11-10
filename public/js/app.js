@@ -248,6 +248,8 @@
 
   /* ---------- shared markup ---------- */
   function ratingHTML(p) {
+    // Maps added from the admin panel start with no reviews: never show made-up stars.
+    if (!p.reviews) return '<div class="rating"><span class="rating-new">New · no reviews yet</span></div>';
     const full = Math.round(p.rating);
     let s = '';
     for (let i = 1; i <= 5; i++) s += STAR.replace('<svg', `<svg class="${i <= full ? '' : 'off'}"`);
@@ -1005,6 +1007,24 @@
     api, MyOrders, downloadMap,
     openQuickView, buildWorld, lockScroll, unlockScroll, reduceMotion, rng
   };
+
+  /* ---------- visitor count ----------
+     One small, anonymous ping per page view so the shop owner can see how
+     many people visit. No cookies; only the page and the site that sent
+     the visitor (its domain name) are sent. Skipped for visitors who ask
+     not to be tracked. */
+  try {
+    const optOut = navigator.doNotTrack === '1' || window.doNotTrack === '1' || navigator.globalPrivacyControl === true;
+    if (!optOut && /^https?:$/.test(location.protocol)) {
+      let ref = '';
+      try { const r = new URL(document.referrer); if (r.host !== location.host) ref = r.hostname; } catch (e) { /* no referrer */ }
+      const src = new URLSearchParams(location.search).get('utm_source') || '';
+      fetch('/api/visit', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin', keepalive: true,
+        body: JSON.stringify({ path: location.pathname, ref, src })
+      }).catch(() => {});
+    }
+  } catch (e) { /* counting must never break the page */ }
 
   const firstVisit = !session.get('booted') && !reduceMotion;
   if (firstVisit) {

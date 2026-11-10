@@ -17,6 +17,11 @@
   <header class="ad-top">
     <div class="container ad-top-inner">
       <a class="ad-brand" href="index.html"><span>Pawan</span> Mode <small>Admin</small></a>
+      <nav class="ad-nav" id="adNav" aria-label="Admin sections" hidden>
+        <button type="button" data-tab="overview" aria-current="page">Overview</button>
+        <button type="button" data-tab="orders">Orders</button>
+        <button type="button" data-tab="maps">Racing maps</button>
+      </nav>
       <div class="ad-top-side" id="topSide" hidden>
         <span class="pill" id="modePill"></span>
         <button class="btn btn-ghost btn-sm" type="button" id="logout">Log out</button>
@@ -33,8 +38,10 @@
     <div class="ad-drawer-box" id="drawerBox"></div>
   </div>
 
+  <div class="ad-tip" id="chartTip" role="status" hidden></div>
   <div class="ad-toast" id="toast" role="status" aria-live="polite"></div>
 
+  <script src="js/art.js"></script>
   <script src="js/pages/admin.js"></script>
 </body>
 </html>

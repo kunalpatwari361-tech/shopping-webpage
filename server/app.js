@@ -9,6 +9,8 @@ const helmet = require('helmet');
 const { rateLimit } = require('express-rate-limit');
 const { createOrderService } = require('./orders');
 const { createDownloads } = require('./downloads');
+const { createProductStore } = require('./products');
+const { createAnalytics } = require('./analytics');
 const { shopRoutes } = require('./routes/shop');
 const { adminRoutes } = require('./routes/admin');
 const { razorpayWebhook } = require('./routes/webhooks');
@@ -19,6 +21,8 @@ const RZP = 'https://*.razorpay.com';
 function createApp({ config, db, catalog, razorpay = null, log = console }) {
   const orders = createOrderService({ db, catalog, config });
   const downloads = createDownloads({ db, orders });
+  const products = createProductStore({ db, catalog, orders });
+  const analytics = createAnalytics({ db, config });
   const app = express();
 
   app.disable('x-powered-by');
@@ -30,7 +34,7 @@ function createApp({ config, db, catalog, razorpay = null, log = console }) {
       const start = Date.now();
       // Never log query strings or download tokens.
       const where = req.path.startsWith('/api/downloads/') ? '/api/downloads/…' : req.path;
-      res.on('finish', () => { if (where.startsWith('/api/') || res.statusCode >= 400) log.info(`${req.method} ${where} ${res.statusCode} ${Date.now() - start}ms`); });
+      res.on('finish', () => { if ((where.startsWith('/api/') && where !== '/api/visit') || res.statusCode >= 400) log.info(`${req.method} ${where} ${res.statusCode} ${Date.now() - start}ms`); });
       next();
     });
   }
@@ -88,21 +92,47 @@ function createApp({ config, db, catalog, razorpay = null, log = console }) {
 
   api.use(limits.api);
   // Writes must come from this site (stops other websites posting on a shopper's behalf).
+  const UPLOAD = /^\/admin\/products\/[a-z0-9-]{1,64}\/file$/;
   api.use((req, res, next) => {
     if (req.method === 'GET' || req.method === 'HEAD') return next();
     const origin = req.get('origin');
     if (origin && origin !== `${req.protocol}://${req.get('host')}`) return res.status(403).json({ error: 'Cross-site request blocked.' });
-    if (!req.is('application/json')) return res.status(415).json({ error: 'Send JSON.' });
+    // The only non-JSON request: the admin uploading a map's .zip file.
+    const upload = req.method === 'PUT' && UPLOAD.test(req.path) && req.is(['application/zip', 'application/x-zip-compressed', 'application/octet-stream']);
+    if (!upload && !req.is('application/json')) return res.status(415).json({ error: 'Send JSON.' });
     next();
   });
   api.use(express.json({ limit: '32kb', strict: true }));
 
+  // Page views for the admin panel's visitor counts (no cookies, no stored IPs).
+  api.post('/visit', (req, res) => {
+    const b = req.body || {};
+    try {
+      analytics.record({
+        ip: req.ip, userAgent: req.get('user-agent'), path: b.path, ref: b.ref, src: b.src,
+        optOut: req.get('dnt') === '1' || req.get('sec-gpc') === '1'
+      });
+    } catch (err) { log.error('Visit count failed:', err); }
+    res.status(204).end();
+  });
+
   api.use('/', shopRoutes({ config, catalog, orders, downloads, razorpay, limits }));
-  api.use('/admin', adminRoutes({ db, config, catalog, orders, limits }));
+  api.use('/admin', adminRoutes({ db, config, catalog, orders, products, analytics, limits }));
   api.use((req, res) => res.status(404).json({ error: 'Not found' }));
   app.use('/api', api);
 
   /* ---------- website ---------- */
+  // Racing maps added from the admin panel, loaded by every page after js/data.js.
+  app.get('/js/products-live.js', (req, res) => {
+    // JSON is valid JavaScript; escaping < keeps it safe if ever inlined in HTML.
+    const json = JSON.stringify(products.forWebsite()).replace(/</g, '\\u003c');
+    res.set('Cache-Control', 'no-cache').type('application/javascript').send(
+      '/* Racing maps added from the admin panel */\n(function () {\n  var d = window.PM_DATA;\n  if (!d) return;\n'
+      + `  var add = ${json};\n`
+      + '  var have = {};\n  d.products.forEach(function (p) { have[p.id] = true; });\n'
+      + '  add.forEach(function (p) { if (!have[p.id]) d.products.push(p); });\n})();\n'
+    );
+  });
   app.use(express.static(config.publicDir, {
     dotfiles: 'ignore',
     index: 'index.html',
@@ -134,7 +164,7 @@ function createApp({ config, db, catalog, razorpay = null, log = console }) {
     res.status(err.gateway ? 502 : 500).json({ error: message });
   });
 
-  return { app, orders };
+  return { app, orders, products, analytics };
 }
 
 module.exports = { createApp };
