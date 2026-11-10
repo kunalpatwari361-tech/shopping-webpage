@@ -1,6 +1,9 @@
 /* ============================================================
    PAWAN MODE — store settings
    Edit this file to put in your own details before going live.
+   The server reads prices, coupons, UPI and bank details from this
+   file and js/data.js, so restart the server after editing them.
+   Never put secrets here: everyone can read this file.
    ============================================================ */
 window.PM_CONFIG = {
   storeName: 'Pawan Mode',
@@ -22,18 +25,16 @@ window.PM_CONFIG = {
   },
   digital: {
     platform: 'PC',  // TODO: the game, version or mod tool your maps work with
-    delivery: 'Download link sent to your email once payment is confirmed'
+    delivery: 'Download straight after payment, any time from My orders'
   },
 
-  /* DEMO MODE
-     true  = no real money moves. UPI and card payments are simulated in the browser.
-     A static website cannot charge cards or confirm UPI payments by itself — for real
-     payments connect a gateway such as Razorpay, Cashfree or PayU (see README.md). */
-  demoMode: true,
+  /* PAYMENTS are handled by the server (see README.md and .env.example).
+     Online UPI and card payments go through Razorpay once its keys are set in .env.
+     Until then, UPI and card payments are simulated while you test. */
 
-  /* UPI (PhonePe / Google Pay / Paytm)
-     Put your UPI ID here (for example 'yourshop@okaxis') to show real, payable QR codes
-     and app links. Leave it empty to keep UPI in demo mode. */
+  /* Direct UPI (PhonePe / Google Pay / Paytm), only used when Razorpay is NOT set up.
+     Put your UPI ID here (for example 'yourshop@okaxis') to show payable QR codes.
+     Shoppers then send their UPI reference and you confirm it in the admin panel. */
   upi: {
     id: '',
     payeeName: 'Pawan Mode'

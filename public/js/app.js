@@ -142,6 +142,70 @@
     };
   }
 
+  /* ---------- shop server ----------
+     Prices, orders and payments are all handled by the server (see server/).
+     The browser only ever sends item ids, quantities and the shopper's details. */
+  async function api(path, opts = {}) {
+    const headers = { Accept: 'application/json' };
+    if (opts.token) headers['X-Order-Token'] = opts.token;
+    const init = { method: 'GET', headers, credentials: 'same-origin' };
+    if (opts.body !== undefined) {
+      init.method = 'POST';
+      headers['Content-Type'] = 'application/json';
+      init.body = JSON.stringify(opts.body);
+    }
+    let res;
+    try {
+      res = await fetch('/api' + path, init);
+    } catch (e) {
+      const err = new Error("Can't reach the shop right now. Check your internet connection and try again.");
+      err.offline = true;
+      throw err;
+    }
+    const data = await res.json().catch(() => null);
+    if (!res.ok || !data) {
+      const err = new Error((data && data.error) || (res.status === 404 && !data ? "The shop's server isn't running. Start it with npm start." : 'Something went wrong. Please try again.'));
+      err.status = res.status;
+      err.fields = data && data.fields;
+      throw err;
+    }
+    return data;
+  }
+
+  // Orders placed on this device: the id plus the private key that unlocks it.
+  const MyOrders = {
+    list() { const v = store.get('myorders', []); return Array.isArray(v) ? v.filter((o) => o && o.id && o.token) : []; },
+    add(id, token) {
+      const rest = this.list().filter((o) => o.id !== id);
+      store.set('myorders', [{ id, token, at: new Date().toISOString() }].concat(rest).slice(0, 30));
+    },
+    tokenFor(id) { const o = this.list().find((x) => x.id === id); return o ? o.token : null; }
+  };
+
+  // Racing map download: ask the server for a one-time link, then open it.
+  async function downloadMap(orderId, token, productId) {
+    const { url } = await api(`/orders/${encodeURIComponent(orderId)}/downloads/${encodeURIComponent(productId)}`, { token, body: {} });
+    if (!/^\/api\/downloads\/[A-Za-z0-9_-]+$/.test(url)) throw new Error('Unexpected download link.');
+    window.location.assign(url);
+  }
+  // Any button with data-dl (product id) and data-dl-order (order id) downloads that map.
+  document.addEventListener('click', async (e) => {
+    const b = e.target.closest ? e.target.closest('[data-dl]') : null;
+    if (!b || b.disabled) return;
+    const orderId = b.dataset.dlOrder;
+    const token = MyOrders.tokenFor(orderId);
+    if (!token) { helpText('This order isn\'t saved on this device.', 3000); return; }
+    b.disabled = true;
+    try {
+      await downloadMap(orderId, token, b.dataset.dl);
+      helpText('Download starting…', 2400);
+    } catch (err) {
+      helpText(esc(err.message), 4800);
+    } finally {
+      setTimeout(() => { b.disabled = false; }, 1500);
+    }
+  });
+
   /* ---------- icons ---------- */
   const ICONS = {
     home: '<path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/>',
@@ -938,6 +1002,7 @@
     D, C, $, $$, esc, inr, byId, catOf, art, productArt, glowColor, icon, card, ratingHTML, priceHTML, tagHTML, payBadges,
     SIZES, sizeOf, sizeBadge, mapSpecs, sizeTier,
     Cart, Wish, totals, getCoupon, setCoupon, store, session, onChange, mount, helpText, banner, pickup, addToCart,
+    api, MyOrders, downloadMap,
     openQuickView, buildWorld, lockScroll, unlockScroll, reduceMotion, rng
   };
 

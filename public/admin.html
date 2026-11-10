@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Admin — Pawan Mode</title>
+  <meta name="theme-color" content="#07070c">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/admin.css">
+</head>
+<body class="admin">
+  <header class="ad-top">
+    <div class="container ad-top-inner">
+      <a class="ad-brand" href="index.html"><span>Pawan</span> Mode <small>Admin</small></a>
+      <div class="ad-top-side" id="topSide" hidden>
+        <span class="pill" id="modePill"></span>
+        <button class="btn btn-ghost btn-sm" type="button" id="logout">Log out</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container" id="admin">
+    <noscript><p class="muted">The admin panel needs JavaScript.</p></noscript>
+  </main>
+
+  <div class="ad-drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="drawerTitle" hidden>
+    <div class="ad-drawer-back" data-close></div>
+    <div class="ad-drawer-box" id="drawerBox"></div>
+  </div>
+
+  <div class="ad-toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script src="js/pages/admin.js"></script>
+</body>
+</html>
