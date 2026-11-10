@@ -63,7 +63,54 @@ CREATE TABLE IF NOT EXISTS admin_sessions (
   created_at  TEXT NOT NULL,
   expires_at  TEXT NOT NULL
 );
+
+-- Digital products added from the admin panel (built-in ones live in public/js/data.js).
+CREATE TABLE IF NOT EXISTS products (
+  id          TEXT PRIMARY KEY,
+  data_json   TEXT NOT NULL,
+  active      INTEGER NOT NULL DEFAULT 1 CHECK (active IN (0, 1)),
+  created_at  TEXT NOT NULL,
+  updated_at  TEXT NOT NULL
+);
+
+-- Visitor counts. No cookies and no IP addresses are stored: a visitor is a
+-- hash of (secret salt of the day + IP + browser), and the salt is thrown away
+-- after the day ends, so nobody can be followed from one day to the next.
+CREATE TABLE IF NOT EXISTS visit_days (
+  day       TEXT PRIMARY KEY,
+  visitors  INTEGER NOT NULL DEFAULT 0,
+  views     INTEGER NOT NULL DEFAULT 0
+);
+CREATE TABLE IF NOT EXISTS visit_pages (
+  day    TEXT NOT NULL,
+  path   TEXT NOT NULL,
+  views  INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (day, path)
+) WITHOUT ROWID;
+CREATE TABLE IF NOT EXISTS visit_sources (
+  day     TEXT NOT NULL,
+  source  TEXT NOT NULL,
+  visits  INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (day, source)
+) WITHOUT ROWID;
+CREATE TABLE IF NOT EXISTS visit_seen (
+  day      TEXT NOT NULL,
+  visitor  TEXT NOT NULL,
+  PRIMARY KEY (day, visitor)
+) WITHOUT ROWID;
+CREATE TABLE IF NOT EXISTS visit_salts (
+  day   TEXT PRIMARY KEY,
+  salt  TEXT NOT NULL
+);
 `;
+
+/** Columns added after the first release, for databases created before them. */
+function migrate(db) {
+  const has = (table, col) => db.prepare(`PRAGMA table_info(${table})`).all().some((c) => c.name === col);
+  // When the owner last marked this order's issues as handled.
+  if (!has('orders', 'issues_cleared_at')) db.exec('ALTER TABLE orders ADD COLUMN issues_cleared_at TEXT');
+  db.exec('CREATE INDEX IF NOT EXISTS orders_by_created ON orders(created_at)');
+}
 
 function openDb(file) {
   if (file !== ':memory:') fs.mkdirSync(path.dirname(file), { recursive: true });
@@ -71,6 +118,7 @@ function openDb(file) {
   db.exec('PRAGMA foreign_keys = ON; PRAGMA busy_timeout = 5000;');
   if (file !== ':memory:') db.exec('PRAGMA journal_mode = WAL;');
   db.exec(SCHEMA);
+  migrate(db);
   return db;
 }
 

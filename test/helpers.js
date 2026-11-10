@@ -8,7 +8,8 @@ const { openDb } = require('../server/db');
 const { loadCatalog } = require('../server/catalog');
 const { createApp } = require('../server/app');
 
-const catalog = loadCatalog(path.join(__dirname, '..', 'public'));
+const PUBLIC = path.join(__dirname, '..', 'public');
+const catalog = loadCatalog(PUBLIC);
 const products = [...catalog.products.values()];
 const gear = products.find((p) => !p.digital);
 const cheapGear = products.filter((p) => !p.digital).sort((a, b) => a.price - b.price)[0];
@@ -29,7 +30,9 @@ async function start({ env = {}, razorpay = null, files = [] } = {}) {
   const config = Object.assign(loadConfig({ ...env }), { dbFile: ':memory:', downloadDir, logRequests: false });
   const db = openDb(':memory:');
   const quiet = { info() {}, warn() {}, error() {} };
-  const { app, orders } = createApp({ config, db, catalog, razorpay, log: quiet });
+  // A fresh catalog per server, so maps added in one test don't leak into the next.
+  const shopCatalog = loadCatalog(PUBLIC);
+  const { app, orders, products: store, analytics } = createApp({ config, db, catalog: shopCatalog, razorpay, log: quiet });
   const server = await new Promise((resolve) => { const s = app.listen(0, '127.0.0.1', () => resolve(s)); });
   const base = `http://127.0.0.1:${server.address().port}`;
 
@@ -59,7 +62,7 @@ async function start({ env = {}, razorpay = null, files = [] } = {}) {
     fs.rmSync(downloadDir, { recursive: true, force: true });
   }
 
-  return { base, req, placeOrder, close, db, config, orders, downloadDir };
+  return { base, req, placeOrder, close, db, config, orders, store, analytics, catalog: shopCatalog, downloadDir };
 }
 
-module.exports = { start, catalog, gear, cheapGear, map, maps, customer, hmac };
+module.exports = { start, catalog, gear, cheapGear, map, maps, customer, hmac, PUBLIC };

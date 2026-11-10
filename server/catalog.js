@@ -53,8 +53,21 @@ function loadCatalog(publicDir) {
     upiId: (store.upi && store.upi.id) || '',
     upiName: (store.upi && store.upi.payeeName) || store.storeName || 'Store',
     bank: store.bank || {},
+    sizes,
+    categories,
+    // Full listings from data.js, as the website sees them (read-only).
+    builtIn: new Map(data.products.map((p) => [p.id, p])),
     products,
-    get(id) { return products.get(id) || null; }
+    get(id) { return products.get(id) || null; },
+    /** Add or update a product added from the admin panel, so it can be bought. */
+    register(p) {
+      const tier = sizes[p.size];
+      const price = p.price != null ? p.price : tier ? tier.price : null;
+      if (!Number.isInteger(price) || price <= 0) throw new Error(`Product "${p.id}" needs a price or a valid size`);
+      products.set(p.id, { id: p.id, name: String(p.name), cat: p.cat, price, digital: true, size: p.size || null });
+    },
+    /** Stop selling a product added from the admin panel. */
+    unregister(id) { products.delete(id); }
   };
 }
 

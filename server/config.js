@@ -36,6 +36,9 @@ function loadConfig(env = process.env) {
   const paymentMode = rzpKeyId ? 'razorpay' : demoWanted ? 'demo' : 'off';
 
   const adminPassword = env.ADMIN_PASSWORD || '';
+  // Days in the admin panel (today's sales, visitors per day) follow this time zone.
+  const timeZone = env.TIME_ZONE || 'Asia/Kolkata';
+  try { new Intl.DateTimeFormat('en-CA', { timeZone }); } catch (e) { throw new Error(`TIME_ZONE "${timeZone}" is not a valid time zone, e.g. Asia/Kolkata`); }
 
   return {
     root: ROOT,
@@ -51,6 +54,11 @@ function loadConfig(env = process.env) {
     downloadDays: int(env.DOWNLOAD_DAYS, 30),
     downloadLimit: int(env.DOWNLOAD_LIMIT, 5),
     unpaidOrderHours: int(env.UNPAID_ORDER_HOURS, 48),
+    // Largest map file the admin panel accepts.
+    uploadMaxMb: int(env.UPLOAD_MAX_MB, 200),
+    timeZone,
+    // Count visitors (no cookies, no stored IP addresses). Set to false to turn off.
+    countVisitors: env.COUNT_VISITORS !== 'false',
     paymentMode,
     razorpay: {
       keyId: rzpKeyId,

@@ -645,6 +645,7 @@ kbd {
 .card-title { font-family: var(--font-ui); font-weight: 700; font-size: 1.15rem; line-height: 1.2; text-transform: none; letter-spacing: 0; }
 .card-title a:hover { color: var(--gold); }
 .rating { display: flex; align-items: center; gap: 6px; font-size: 0.85rem; color: var(--muted); }
+.rating-new { color: var(--cyan); font-weight: 600; }
 .stars-row { display: inline-flex; gap: 1px; color: var(--gold); }
 .stars-row svg { width: 14px; height: 14px; fill: currentColor; }
 .stars-row svg.off { fill: rgba(255, 255, 255, 0.2); }
